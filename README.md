@@ -1,13 +1,47 @@
 # TKA Egypt — Design System
 
-This repository is the source of truth for the TKA Egypt visual identity, design tokens, Panda CSS configuration, accessibility requirements, and AI-agent implementation rules.
+**Execution standard:** brand-first, accessible, restrained, and enforceable.
 
-Brand invariants:
-- Royal blue: `#0846ED`
-- Yellow: `#FEB700`
-- White and neutral grays are supporting colors.
-- Panda CSS is the styling system. The brand identity is TKA Egypt, not the framework.
+This repository defines the visual and implementation contract for TKA Egypt products. It is the source of truth for brand tokens, Panda CSS recipes, visual-quality rules, accessibility gates, and AI-agent behavior. It does not claim to be the finished design of any product website.
 
-The repository is being bootstrapped from an empty state. The initial design-system implementation will be reviewed in a dedicated pull request before being treated as an adopted standard.
+## Brand invariants
 
-Start with the pull request and documentation before copying patterns into a product application.
+| Decision | Rule |
+|---|---|
+| Primary brand blue | `#0846ED` |
+| Brand yellow | `#FEB700` |
+| Supporting palette | White and a measured neutral-gray scale |
+| Styling system | Panda CSS v1 stable configuration |
+| Visual direction | Editorial clarity and precision, with restrained enterprise structure |
+| Directionality | RTL-first for Arabic experiences; LTR must be explicitly tested |
+| Default components | Prohibited unless explicitly reviewed and adopted |
+| AI-generated UI | Must comply with [Anti-AI-Slop rules](docs/anti-ai-slop.md) |
+
+The brand colors are not interchangeable: blue carries primary actions and links; yellow is an accent and must not carry small white text. Use semantic tokens instead of raw color literals.
+
+## Start here
+
+1. [Brand and visual language](docs/brand-and-visual-language.md)
+2. [Anti-AI-Slop rules](docs/anti-ai-slop.md)
+3. [Architecture and token contract](docs/architecture.md)
+4. [Accessibility and quality gates](docs/accessibility-and-quality-gates.md)
+5. [Agent instructions](AGENTS.md)
+
+## Local checks
+
+Requires Node.js 22+ and npm.
+
+```sh
+npm install
+npm run check
+```
+
+The check pipeline validates brand invariants, contrast expectations, architecture documentation, static anti-slop rules, TypeScript configuration, and Panda CSS code generation. The generated `styled-system/` directory is build output; do not hand-edit or commit it.
+
+## Change policy
+
+Changes to brand colors, semantic meanings, component recipes, exceptions, or accessibility gates require a focused pull request explaining the reason, affected surfaces, evidence, and regression coverage. No silent brand drift and no unreviewed global restyling.
+
+## Status
+
+This repository was empty at the start of the bootstrap. This pull request establishes the baseline system contract and tooling; it does not imply that any separate TKA product site has already integrated it.

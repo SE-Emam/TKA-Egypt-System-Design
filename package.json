@@ -1,0 +1,20 @@
+{
+  "name": "@tka-egypt/design-system",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Brand-governed design tokens, Panda CSS recipes, and quality gates for TKA Egypt.",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "check:system": "node --test tests/*.test.mjs && node scripts/check-design-system.mjs",
+    "typecheck": "tsc --noEmit",
+    "panda:codegen": "panda codegen",
+    "check": "npm run check:system && npm run typecheck && npm run panda:codegen"
+  },
+  "devDependencies": {
+    "@pandacss/dev": "1.12.1",
+    "typescript": "5.9.3"
+  }
+}
