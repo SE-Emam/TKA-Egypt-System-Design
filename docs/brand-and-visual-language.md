@@ -25,6 +25,19 @@ Use borders and whitespace to define sections. Cards are appropriate for indepen
 
 Use the configured body and heading families. Establish hierarchy with a controlled scale, weight, line-height, and measure. Avoid oversized all-caps labels, gratuitous letter spacing, and multiple unrelated font families. Do not load fonts from a third-party CDN without a specific performance, privacy, licensing, and offline-fallback review.
 
+#### Font stack (decided 2026-10-21)
+
+Arabic is the primary script; every family below also carries Latin. All families are SIL Open Font License 1.1, so self-hosting is permitted and is the production default — no third-party font CDN in production.
+
+| Token | Family | Role | Rules |
+| --- | --- | --- | --- |
+| `fonts.body` | Readex Pro | Body text and form controls | Variable 200–700; use 400/500/600. Arabic line-height 1.7–1.9. |
+| `fonts.heading` | Readex Pro | UI headings (cards, forms, panels, tables) | Same family as body; hierarchy from weight 600/700 and size. |
+| `fonts.display` | El Messiri | Display and editorial headings only (hero, page, course, article titles) | Weights 500–700. Never for small UI headings. |
+| `fonts.quote` | Amiri | Quotations and classical callouts only | Minimum 20px; line-height ~1.9 even with full tashkeel. Lazy-load only — never in the critical font bundle. |
+
+Deliberately excluded: Baloo Bhaijaan 2 is approved for marketing surfaces only (ad posters, social creatives) and is **not** a product token. Do not import it into product UI.
+
 ### Product-first composition
 
 The user task determines the page structure. Do not default to the familiar AI landing-page formula of a giant gradient hero, floating glass cards, three identical feature cards, abstract blobs, invented metrics, logos without evidence, or a decorative dashboard with no operational meaning.

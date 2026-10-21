@@ -69,8 +69,26 @@ export default defineConfig({
           },
         },
         fonts: {
-          body: { value: '"Inter", "SF Pro Text", ui-sans-serif, system-ui, sans-serif' },
-          heading: { value: '"Inter", "SF Pro Display", ui-sans-serif, system-ui, sans-serif' },
+          body: {
+            value: '"Readex Pro", "Segoe UI", ui-sans-serif, system-ui, sans-serif',
+            description:
+              "Arabic-first text family for body copy and form controls (SIL OFL 1.1). Variable 200-700; use 400/500/600. Arabic text line-height 1.7-1.9.",
+          },
+          heading: {
+            value: '"Readex Pro", "Segoe UI", ui-sans-serif, system-ui, sans-serif',
+            description:
+              "UI headings share the body family. Hierarchy comes from weight (600/700) and size, never from a second UI family.",
+          },
+          display: {
+            value: '"El Messiri", "Readex Pro", serif',
+            description:
+              "Display and editorial headings only: hero, page titles, course and article titles (SIL OFL 1.1). Weights 500-700. Never for small UI headings; its bold lacks punch at small sizes.",
+          },
+          quote: {
+            value: '"Amiri", serif',
+            description:
+              "Quotations and classical callouts only, never UI or body text (SIL OFL 1.1). Minimum size 20px; line-height ~1.9 even with full tashkeel. Lazy-load only: Amiri carries a large Quranic glyph set and must never enter the critical font bundle.",
+          },
           mono: { value: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace' },
         },
         fontSizes: {
@@ -228,7 +246,7 @@ export default defineConfig({
       color: "foreground",
       fontFamily: "body",
       fontSize: "body",
-      lineHeight: "1.6",
+      lineHeight: "1.7",
       textRendering: "optimizeLegibility",
     },
     "::selection": { background: "accent", color: "onAccent" },
