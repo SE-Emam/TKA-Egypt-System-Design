@@ -1,8 +1,14 @@
 # TKA Egypt — Design System
 
+![TKA Egypt — Design System](assets/banner.png)
+
 **Execution standard:** brand-first, accessible, restrained, and enforceable.
 
+**Live brand page:** [se-emam.github.io/TKA-Egypt-System-Design](https://se-emam.github.io/TKA-Egypt-System-Design/)
+
 This repository defines the visual and implementation contract for TKA Egypt products. It is the source of truth for brand tokens, Panda CSS recipes, visual-quality rules, accessibility gates, and AI-agent behavior. It does not claim to be the finished design of any product website.
+
+**Brand assets:** [`assets/logo-blue.png`](assets/logo-blue.png) (primary, brand blue on transparent) · [`assets/logo-white.png`](assets/logo-white.png) (reversed, for dark and brand-blue surfaces) · [`assets/banner.png`](assets/banner.png)
 
 ## Brand invariants
 
