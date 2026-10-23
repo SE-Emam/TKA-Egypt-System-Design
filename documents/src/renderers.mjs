@@ -43,15 +43,28 @@ export function extractDesignTokens(configSource = readFileSync(resolve(ROOT, "p
   const fontName = bodyFontLine?.match(/"([^"]+)"/)?.[1];
   if (!fontName) fail("canonical fonts.body token is missing");
   const colors = {
+    brand300: color("brand", "300"),
     brand500: color("brand", "500"),
     accent500: color("accent", "500"),
     neutral0: color("neutral", "0"),
     neutral50: color("neutral", "50"),
     neutral100: color("neutral", "100"),
     neutral200: color("neutral", "200"),
+    neutral300: color("neutral", "300"),
     neutral600: color("neutral", "600"),
+    neutral700: color("neutral", "700"),
     neutral800: color("neutral", "800"),
     neutral900: color("neutral", "900"),
+    neutral950: color("neutral", "950"),
+    green50: color("green", "50"),
+    green700: color("green", "700"),
+    green900: color("green", "900"),
+    amber50: color("amber", "50"),
+    amber800: color("amber", "800"),
+    amber950: color("amber", "950"),
+    red50: color("red", "50"),
+    red700: color("red", "700"),
+    red900: color("red", "900"),
   };
   if (colors.brand500 !== "#0846ED" || colors.accent500 !== "#FEB700") {
     fail("canonical TKA anchors changed: brand.500 must be #0846ED and accent.500 must be #FEB700");
