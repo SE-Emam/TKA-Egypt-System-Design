@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, writeFileSync, rmSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { basename, extname, resolve } from "node:path";
 
@@ -12,6 +12,8 @@ for (const [command, versionArgs] of [["soffice", ["--version"]], ["pdfinfo", ["
   const check = spawnSync(command, versionArgs, { encoding: "utf8" });
   if (check.error && check.error.code === "ENOENT") fail("required visual-validation utility is unavailable: " + command);
 }
+rmSync(visualDir, { recursive: true, force: true });
+rmSync(conversionDir, { recursive: true, force: true });
 mkdirSync(visualDir, { recursive: true });
 mkdirSync(conversionDir, { recursive: true });
 function run(command, args) {
@@ -51,7 +53,7 @@ for (let index = 0; index < pdfs.length; index += 1) {
   if (!extracted) fail("text extraction is empty for " + pdf);
   if (!extracted.toUpperCase().includes("TKA EGYPT")) fail("document identity was lost during PDF conversion: " + pdf);
   if (!/[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/u.test(extracted)) fail("Arabic glyph text is missing from the rendered PDF: " + pdf);
-  if (sourceId !== "pdf" && !extracted.includes("عينة عربية للتحقق من الهوية")) fail("Arabic content-preservation check failed after rendering: " + pdf);
+  if (!extracted.includes("عينة عربية للتحقق من الهوية")) fail("Arabic content-preservation check failed after rendering: " + pdf);
   const previewBase = resolve(visualDir, sourceId + "-acceptance-sample-page");
   run("pdftoppm", ["-scale-to", "1400", "-png", pdf, previewBase]);
   const previewFiles = readdirSync(visualDir).filter((name) => name.startsWith(sourceId + "-acceptance-sample-page-") && name.endsWith(".png")).sort();
