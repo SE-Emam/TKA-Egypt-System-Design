@@ -60,6 +60,16 @@ test("HTML renderer escapes untrusted content and injects the canonical token va
   assert.match(output, /@media print/);
 });
 
+test("LTR documents remain supported without changing the canonical TKA identity", async () => {
+  const ltr = { ...fixture, title: "TKA LTR Acceptance", language: "en", direction: "ltr" };
+  const markdown = await renderDocument(ltr, "markdown");
+  const html = await renderDocument(ltr, "html");
+  assert.match(markdown, /> TKA Egypt · en · LTR/);
+  assert.match(html, /<html lang="en" dir="ltr">/);
+  assert.match(html, /--tka-brand-blue:#0846ED/);
+  assert.doesNotMatch(html, /--tka-brand-blue:#[0-9A-Fa-f]{6}(?!0846ED)/);
+});
+
 test("renderer refuses implicit profile changes and unsupported formats", async () => {
   await assert.rejects(() => renderDocument({ ...fixture, profile: "other-profile" }, "markdown"), /does not exist/);
   await assert.rejects(() => renderDocument(fixture, "rtf"), /unsupported format/);
