@@ -1,16 +1,16 @@
 # TKA Document System
 ## Purpose and implementation contract
-The document system turns one validated, presentation-independent content object into Markdown, HTML, DOCX, PDF, or PPTX. The implementation is in \`documents/src/renderers.mjs\`, the CLI in \`scripts/render-document.mjs\`, and the single-source TKA design tokens remain in \`panda.config.ts\`.
+The document system turns one validated, presentation-independent content object into Markdown, HTML, DOCX, PDF, or PPTX. The implementation is in `documents/src/renderers.mjs`, the CLI in `scripts/render-document.mjs`, and the single-source TKA design tokens remain in `panda.config.ts`.
 A file extension alone is never acceptance evidence. The gates below distinguish renderer existence, generated artifacts, structural checks, and PDF-based rendering/extraction checks. Visual raster previews are archived by CI for human review; raster generation is not a substitute for a human visual review.
 ## Single source of truth and identity separation
-- \`panda.config.ts\` is the only executable source for color and font tokens. The exporter reads its palette at runtime; it does not own another handwritten TKA palette.
-- Protected anchors are immutable: \`brand.500 = #0846ED\` and \`accent.500 = #FEB700\`. A runtime mismatch fails closed.
+- `panda.config.ts` is the only executable source for color and font tokens. The exporter reads its palette at runtime; it does not own another handwritten TKA palette.
+- Protected anchors are immutable: `brand.500 = #0846ED` and `accent.500 = #FEB700`. A runtime mismatch fails closed.
 - Profiles provide project identity metadata, permitted formats, language, and direction. They cannot replace the token source or override brand anchors.
-- \`documents/profiles/tka-default.json\` is the explicit TKA Egypt fallback profile. Selecting a missing profile is an error; the renderer does not silently switch identities.
+- `documents/profiles/tka-default.json` is the explicit TKA Egypt fallback profile. Selecting a missing profile is an error; the renderer does not silently switch identities.
 - Blue is used for primary identity and headings; yellow is a limited accent. The HTML uses dark text on yellow, readable neutral surfaces, semantic sections/tables, logical CSS properties, a print stylesheet, and reduced-motion handling.
 - Text values are escaped in HTML output. The content schema and runtime validation reject unsupported top-level/section/table properties and malformed table dimensions.
 ## Content contract
-Required document fields: \`title\`, \`language\`, \`direction\` (\`rtl\` or \`ltr\`), \`profile\`, and at least one \`sections\` entry. A section contains a \`heading\` and may contain \`paragraphs\`, \`bullets\`, \`code\`, or a table object with \`headers\` and \`rows\`. Table rows must match the header column count. Unknown fields fail validation rather than being silently dropped.
+Required document fields: `title`, `language`, `direction` (`rtl` or `ltr`), `profile`, and at least one `sections` entry. A section contains a `heading` and may contain `paragraphs`, `bullets`, `code`, or a table object with `headers` and `rows`. Table rows must match the header column count. Unknown fields fail validation rather than being silently dropped.
 ## Output formats and acceptance evidence
 | Format | Exporter | Structural checks | Render/extraction checks |
 | --- | --- | --- | --- |
@@ -25,24 +25,22 @@ PDF export uses LibreOffice (the `soffice` executable) to convert the same gover
 ## Usage
 Requires Node.js 22+ and npm.
 Install dependencies and run all checks:
-\`\`\`sh
+```sh
 npm install
 npm run check:documents
 npm run check
 npm run docs:fixtures -- --out .test-artifacts/documents
 npm run docs:visual-check -- .test-artifacts/documents
-\`\`\`
+```
 Render a document from JSON:
-\`\`\`sh
+```sh
 npm run docs:render -- --input documents/examples/acceptance-sample.json --format html --out output/tka-report.html
 npm run docs:render -- --input documents/examples/acceptance-sample.json --format docx --out output/tka-report.docx
 npm run docs:render -- --input documents/examples/acceptance-sample.json --format pdf --out output/tka-report.pdf
 npm run docs:render -- --input documents/examples/acceptance-sample.json --format pptx --out output/tka-report.pptx
 npm run docs:render -- --input documents/examples/acceptance-sample.json --format markdown --out output/tka-report.md
-\`\`\`
+```
 Change the profile intentionally with `--profile <id>`; the JSON document’s `profile` must match.
-\`\`\`sh
-\`\`\`
 The CLI prints a JSON generation summary. Generation success is not proof of all render/visual gates; use the CI acceptance workflow and inspect its report and previews.
 ## CI and review checklist
 - All profile files and JSON contracts parse and pass policy checks.
