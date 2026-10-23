@@ -29,6 +29,7 @@ The brand colors are not interchangeable: blue carries primary actions and links
 4. [Accessibility and quality gates](docs/accessibility-and-quality-gates.md)
 5. [Agent instructions](AGENTS.md)
 6. [Portable TKA Design System Agent Skill](skills/tka-design-system/README.md) — reusable workflow for Arabic/English social creatives, presentations, and product design with repository-grounded brand rules.
+7. [TKA Design System MCP Server](docs/mcp-server.md) — local read-only MCP tools for canonical rules, reference documents, and real image-asset discovery.
 
 ## Local checks
 
