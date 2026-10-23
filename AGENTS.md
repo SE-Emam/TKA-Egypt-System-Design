@@ -25,9 +25,10 @@ These instructions are mandatory for any agent or contributor working in this re
 2. Resolve the target project profile under `documents/profiles/`. Use `tka-default` only as an explicit fallback and disclose that fallback.
 3. Treat `panda.config.ts` as the sole executable design-token source. Profiles refer to token names and must not duplicate hex values or override protected TKA anchors.
 4. Keep content separate from presentation and preserve semantic order, language, and direction.
-5. Do not claim a format is supported merely because a template exists. A format is PASS only when its exporter, generated artifact, structural checks, and required visual/RTL checks have evidence.
-6. Run `npm run check:documents` and `npm run check` before reporting completion. Report each format and profile gate as PASS, PARTIAL, or BLOCKED.
-7. Never invent project logos, identity data, fonts, or brand overrides. If a profile is missing or invalid, use the documented default and disclose the fallback.
+5. Do not claim a format is accepted merely because an exporter exists. Generate an actual artifact and run structural and render/extraction acceptance checks. Human visual review remains PARTIAL until CI preview images have been inspected.
+6. Run `npm run check:documents`, `npm run check`, `npm run docs:fixtures -- --out .test-artifacts/documents`, and `npm run docs:visual-check -- .test-artifacts/documents` before reporting completion.
+7. Select a profile explicitly. A missing profile is a hard error; never silently substitute a different project identity.
+8. Never invent project logos, identity data, fonts, or brand overrides. PDF requires an Arabic-capable system/approved TTF font; do not commit font binaries without a license review.
 
 ## Implementation rules
 
