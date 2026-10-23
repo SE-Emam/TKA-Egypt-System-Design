@@ -123,3 +123,11 @@ test("design tokens expose canonical dark-surface and status colors for the show
   assert.equal(tokens.colors.amber50, "#FFF5D6");
   assert.equal(tokens.colors.red50, "#FFF0EF");
 });
+
+test("PPTX preserves code as a separate left-to-right code block", async () => {
+  const artifact = await renderDocument(fixture, "pptx");
+  const inspected = await inspectOfficePackage(artifact, "pptx");
+  const codeSlide = inspected.slideXmls.find((xml) => xml.includes("console.log") || xml.includes("const brand"));
+  assert.ok(codeSlide, "PPTX must preserve the fixture code block");
+  assert.match(codeSlide, /Consolas/);
+});
