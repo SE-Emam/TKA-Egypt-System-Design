@@ -15,7 +15,8 @@
     "docs:visual-check": "node scripts/check-rendered-documents.mjs",
     "typecheck": "tsc --noEmit",
     "panda:codegen": "panda codegen",
-    "check": "npm run check:system && npm run typecheck && npm run panda:codegen"
+    "check": "npm run check:system && npm run typecheck && npm run panda:codegen",
+    "showcase:build": "node scripts/build-showcase.mjs"
   },
   "dependencies": {
     "ajv": "8.20.0",
