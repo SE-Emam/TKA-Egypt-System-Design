@@ -1,58 +1,103 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync, readdirSync } from "node:fs";
+import { readFileSync } from "node:fs";
+import { FORMATS, extractDesignTokens, loadProfile, renderDocument, inspectOfficePackage, validateDocument } from "../documents/src/renderers.mjs";
+import { PDFDocument } from "pdf-lib";
 
-const root = new URL("../", import.meta.url);
-const read = (path) => readFileSync(new URL(path, root), "utf8");
-const profile = JSON.parse(read("documents/profiles/tka-default.json"));
-const profileSchema = JSON.parse(read("documents/schemas/project-profile.schema.json"));
-const documentSchema = JSON.parse(read("documents/schemas/document.schema.json"));
+const fixture = JSON.parse(readFileSync(new URL("../documents/examples/acceptance-sample.json", import.meta.url), "utf8"));
+const tokens = extractDesignTokens();
+const textFormats = new Set(["markdown", "html"]);
 
-test("TKA default profile protects the canonical token source and brand anchors", () => {
-  assert.equal(profile.brand.tokenSource, "panda.config.ts");
-  assert.equal(profile.brand.allowAnchorOverrides, false);
+test("canonical TKA identity is extracted from panda.config.ts, not a parallel palette", () => {
+  assert.equal(tokens.source, "panda.config.ts");
+  assert.equal(tokens.colors.brand500, "#0846ED");
+  assert.equal(tokens.colors.accent500, "#FEB700");
+  assert.equal(tokens.fontName, "Readex Pro");
+});
+
+test("explicit profile protects both brand anchors and declares the five output formats", () => {
+  const profile = loadProfile("tka-default");
   assert.deepEqual(new Set(profile.brand.protectedAnchors), new Set(["brand.500", "accent.500"]));
-  assert.doesNotMatch(JSON.stringify(profile), /#[0-9a-f]{3,8}/i);
+  assert.equal(profile.brand.allowAnchorOverrides, false);
+  assert.equal(profile.brand.tokenSource, "panda.config.ts");
+  assert.deepEqual(new Set(profile.documentDefaults.formats), new Set(FORMATS));
+  assert.throws(() => loadProfile("no-such-profile"), /does not exist/);
+  assert.throws(() => loadProfile("../panda.config"), /lowercase slug/);
 });
 
-test("default profile declares five formats and Arabic RTL defaults", () => {
-  assert.equal(profile.documentDefaults.language, "ar");
-  assert.equal(profile.documentDefaults.direction, "rtl");
-  assert.deepEqual(new Set(profile.documentDefaults.formats), new Set(["docx", "pdf", "markdown", "html", "pptx"]));
+test("document validation rejects unknown fields and malformed tables", () => {
+  assert.throws(() => validateDocument({ ...fixture, unapprovedColor: "#ff00ff" }), /unsupported field/);
+  assert.throws(() => validateDocument({ ...fixture, direction: "sideways" }), /direction/);
+  const malformed = structuredClone(fixture);
+  malformed.sections[0].table.rows.push(["too", "few"]);
+  assert.throws(() => validateDocument(malformed), /matching the header width/);
+  const malformedSection = structuredClone(fixture);
+  malformedSection.sections[0].untrackedBrandColor = "#112233";
+  assert.throws(() => validateDocument(malformedSection), /unsupported field/);
 });
 
-test("project-profile schema forbids anchor overrides and alternate token sources", () => {
-  assert.equal(profileSchema.properties.brand.properties.allowAnchorOverrides.const, false);
-  assert.equal(profileSchema.properties.brand.properties.tokenSource.const, "panda.config.ts");
+test("Markdown renderer preserves RTL metadata, headings, bullets, code and tables", async () => {
+  const output = await renderDocument(fixture, "markdown");
+  assert.equal(typeof output, "string");
+  assert.match(output, /قبول نظام مستندات TKA/);
+  assert.match(output, /> TKA Egypt · ar · RTL/);
+  assert.match(output, new RegExp(String.fromCharCode(96).repeat(3)));
+  assert.match(output, /\| البوابة \| الدليل \| الحالة \|/);
+  assert.match(output, /Panda CSS/);
 });
 
-test("document content contract requires language, direction, profile and sections", () => {
-  assert.equal(documentSchema.additionalProperties, false);
-  for (const field of ["title", "language", "direction", "profile", "sections"]) assert.ok(documentSchema.required.includes(field));
-  assert.deepEqual(documentSchema.properties.direction.enum, ["ltr", "rtl"]);
+test("HTML renderer escapes untrusted content and injects the canonical token values", async () => {
+  const malicious = structuredClone(fixture);
+  malicious.sections[0].paragraphs.push('<script>alert("xss")</script> & "quoted"');
+  const output = await renderDocument(malicious, "html");
+  assert.equal(typeof output, "string");
+  assert.match(output, /<html lang="ar" dir="rtl">/);
+  assert.match(output, /--tka-brand-blue:#0846ED/);
+  assert.match(output, /--tka-brand-yellow:#FEB700/);
+  assert.match(output, /&lt;script&gt;alert\(&quot;xss&quot;\)&lt;\/script&gt;/);
+  assert.doesNotMatch(output, /<script>alert/);
+  assert.match(output, /scope="col"/);
+  assert.match(output, /@media print/);
 });
 
-test("initial templates use the document contract and avoid a parallel hex palette", () => {
-  const markdown = read("documents/templates/markdown/document.md.tmpl");
-  const html = read("documents/templates/html/document.html.tmpl");
-  assert.match(markdown, /\{\{title\}\}/);
-  assert.match(html, /lang="\{\{language\}\}" dir="\{\{direction\}\}"/);
-  assert.match(html, /--tka-token-brand-500/);
-  assert.doesNotMatch(html, /#[0-9a-f]{3,8}\b/i);
+test("renderer refuses implicit profile changes and unsupported formats", async () => {
+  await assert.rejects(() => renderDocument({ ...fixture, profile: "other-profile" }, "markdown"), /does not exist/);
+  await assert.rejects(() => renderDocument(fixture, "rtf"), /unsupported format/);
 });
 
-test("status docs do not misrepresent template contracts as working exporters", () => {
-  const status = read("docs/document-system.md");
-  assert.match(status, /does \*\*not\*\* yet ship complete DOCX, PDF, or PPTX exporters/);
-  for (const format of ["DOCX", "PDF", "PPTX"]) assert.match(status, new RegExp(format + " \\| Not implemented"));
-});
-
-test("all project profile files use canonical source and protected anchors", () => {
-  for (const name of readdirSync(new URL("../documents/profiles/", import.meta.url)).filter((item) => item.endsWith(".json"))) {
-    const item = JSON.parse(readFileSync(new URL(name, new URL("../documents/profiles/", import.meta.url)), "utf8"));
-    assert.equal(item.brand.tokenSource, "panda.config.ts");
-    assert.equal(item.brand.allowAnchorOverrides, false);
-    assert.ok(item.brand.protectedAnchors.includes("brand.500"));
-    assert.ok(item.brand.protectedAnchors.includes("accent.500"));
+test("all five exporters produce a real non-empty artifact with required structural evidence", async () => {
+  for (const format of FORMATS) {
+    const artifact = await renderDocument(fixture, format);
+    assert.ok(artifact && (typeof artifact === "string" ? artifact.length : artifact.byteLength) > 100, format + " output should not be an empty placeholder");
+    if (textFormats.has(format)) {
+      assert.match(artifact, /قبول نظام مستندات TKA/);
+      continue;
+    }
+    if (format === "docx") {
+      const inspected = await inspectOfficePackage(artifact, format);
+      assert.ok(inspected.entries > 5);
+      assert.match(inspected.documentXml, /w:document/);
+      assert.match(inspected.documentXml, /قبول نظام مستندات TKA/);
+      continue;
+    }
+    if (format === "pptx") {
+      const inspected = await inspectOfficePackage(artifact, format);
+      assert.ok(inspected.entries > 5);
+      assert.ok(inspected.slides >= 2, "cover and at least one content slide are expected");
+      assert.match(inspected.presentationXml, /p:presentation/);
+      continue;
+    }
+    if (format === "pdf") {
+      assert.equal(artifact.subarray(0, 5).toString("ascii"), "%PDF-");
+      const pdf = await PDFDocument.load(artifact);
+      assert.ok(pdf.getPageCount() >= 1);
+      assert.equal(pdf.getTitle(), fixture.title);
+      continue;
+    }
   }
+});
+
+test("canonical brand-anchor drift fails closed", () => {
+  const source = readFileSync(new URL("../panda.config.ts", import.meta.url), "utf8");
+  assert.throws(() => extractDesignTokens(source.replace("#0846ED", "#0055AA")), /canonical TKA anchors changed/);
 });
