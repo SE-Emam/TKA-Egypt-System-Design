@@ -8,9 +8,14 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: design-system-quality-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   quality:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -19,13 +24,14 @@ jobs:
         with:
           node-version: 22
       - name: Install document rendering tools
+        timeout-minutes: 10
         run: |
           if command -v soffice >/dev/null && command -v pdfinfo >/dev/null && command -v pdftotext >/dev/null && command -v pdftoppm >/dev/null && command -v fc-match >/dev/null && fc-match "DejaVu Sans" | grep -qi "DejaVu Sans"; then
             echo "Office, Poppler, and DejaVu tools are already available; skipping package installation."
           else
-            if ! sudo timeout 180s apt-get install --yes --no-install-recommends fonts-dejavu-core libreoffice-writer libreoffice-impress poppler-utils; then
-              sudo timeout 90s apt-get update
-              sudo timeout 180s apt-get install --yes --no-install-recommends fonts-dejavu-core libreoffice-writer libreoffice-impress poppler-utils
+            if ! sudo timeout 300s apt-get install --yes --no-install-recommends fonts-dejavu-core libreoffice-writer libreoffice-impress poppler-utils; then
+              sudo timeout 180s apt-get update
+              sudo timeout 300s apt-get install --yes --no-install-recommends fonts-dejavu-core libreoffice-writer libreoffice-impress poppler-utils
             fi
           fi
       - name: Install dependencies
