@@ -28,7 +28,7 @@ for (const [label, value] of [["TKA royal blue", "#0846ED"], ["TKA yellow", "#FE
   if (!config.includes(value)) failures.push("Canonical token source is missing " + label + " " + value);
 }
 const packageJson = parseJson("package.json");
-for (const dependency of ["docx", "pdf-lib", "@pdf-lib/fontkit", "bidi-js", "naqqash", "pptxgenjs", "jszip"]) {
+for (const dependency of ["ajv", "docx", "pdf-lib", "@pdf-lib/fontkit", "bidi-js", "naqqash", "pptxgenjs", "jszip"]) {
   if (!packageJson?.dependencies?.[dependency]) failures.push("Missing runtime dependency for real output validation: " + dependency);
 }
 for (const script of ["check:documents", "docs:render", "docs:fixtures", "docs:visual-check"]) {
