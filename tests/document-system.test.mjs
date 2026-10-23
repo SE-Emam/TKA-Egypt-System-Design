@@ -142,14 +142,21 @@ test("DOCX code is split into shaded LTR monospace paragraphs", async () => {
   const artifact = await renderDocument(fixture, "docx");
   const inspected = await inspectOfficePackage(artifact, "docx");
   const xml = inspected.documentXml;
-  const codeIndex = xml.indexOf("console.log");
-  assert.ok(codeIndex > 0, "DOCX must preserve the second code line");
-  const paragraphStart = xml.lastIndexOf("<w:p", codeIndex);
-  const paragraphEnd = xml.indexOf("</w:p>", codeIndex) + "</w:p>".length;
-  const codeParagraph = xml.slice(paragraphStart, paragraphEnd);
-  assert.match(codeParagraph, /w:shd/);
-  assert.match(codeParagraph, /Consolas/);
-  assert.match(codeParagraph, /w:rtl w:val="false"/);
-  assert.match(codeParagraph, /console\.log/);
-  assert.match(xml, /<w:t[^>]*>const brand/);
+  const firstIndex = xml.indexOf("const brand");
+  const secondIndex = xml.indexOf("console.log");
+  assert.ok(firstIndex > 0 && secondIndex > firstIndex, "both code lines must be preserved in order");
+  const paragraphAt = (index) => {
+    const start = xml.lastIndexOf("<w:p", index);
+    const end = xml.indexOf("</w:p>", index) + "</w:p>".length;
+    return xml.slice(start, end);
+  };
+  const firstCodeParagraph = paragraphAt(firstIndex);
+  const secondCodeParagraph = paragraphAt(secondIndex);
+  assert.notEqual(firstCodeParagraph, secondCodeParagraph, "each code line must occupy its own paragraph");
+  for (const codeParagraph of [firstCodeParagraph, secondCodeParagraph]) {
+    assert.match(codeParagraph, /w:shd/);
+    assert.match(codeParagraph, /Consolas/);
+    assert.match(codeParagraph, /w:rtl w:val="false"/);
+  }
+  assert.match(secondCodeParagraph, /console\.log/);
 });
