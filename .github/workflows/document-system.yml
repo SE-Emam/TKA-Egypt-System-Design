@@ -19,7 +19,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: document-system-${{ github.ref }}
+  group: document-system-v2-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
