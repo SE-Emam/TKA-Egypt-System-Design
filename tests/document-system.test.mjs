@@ -28,7 +28,7 @@ test("explicit profile protects both brand anchors and declares the five output 
 test("document validation rejects unknown fields and malformed tables", () => {
   assert.throws(() => validateDocument({ ...fixture, unapprovedColor: "#ff00ff" }), /additional properties|unsupported field/);
   assert.throws(() => validateDocument({ ...fixture, direction: "sideways" }), /direction/);
-  assert.throws(() => validateDocument({ ...fixture, language: "Arabic" }), /schema/);
+  assert.throws(() => validateDocument({ ...fixture, language: "ar!" }), /schema/);
   const emptyHeader = structuredClone(fixture);
   emptyHeader.sections[0].table.headers[0] = "";
   assert.throws(() => validateDocument(emptyHeader), /schema/);
