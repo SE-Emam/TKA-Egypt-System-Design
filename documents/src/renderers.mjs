@@ -308,9 +308,7 @@ export async function renderPdf(document, tokens = extractDesignTokens()) {
 }
 
 function contentBlocks(section) {
-  const blocks = [...(section.paragraphs || []), ...(section.bullets || []).map((item) => "• " + item)];
-  if (section.code !== undefined) blocks.push(section.code);
-  return blocks;
+  return [...(section.paragraphs || []), ...(section.bullets || []).map((item) => "• " + item)];
 }
 function chunkText(text, limit = 520) {
   const result = [];
@@ -372,6 +370,22 @@ export async function renderPptx(document, tokens = extractDesignTokens()) {
         slide.addText(chunk, { x: 0.75, y: 2.25, w: 11.85, h: 4.45, fontFace: font, fontSize: 18, color: ink, valign: "top", align: rtl ? "right" : "left", paraSpaceAfterPt: 10, margin: 0.1, rtlMode: rtl, lang: document.language, fit: "shrink" });
       });
     }
+    if (section.code !== undefined) {
+      const codeChunks = chunkText(section.code, 1050);
+      codeChunks.forEach((chunk, index) => {
+        const slide = contentSlide(section.heading, codeChunks.length > 1 ? "Code · Part " + (index + 1) + " of " + codeChunks.length : "Code");
+        slide.addShape(pptx.ShapeType.rect, {
+          x: 0.75, y: 2.25, w: 11.85, h: 4.45,
+          line: { color: c.neutral200.slice(1), width: 0.6 },
+          fill: { color: c.neutral50.slice(1) },
+        });
+        slide.addText(chunk, {
+          x: 0.95, y: 2.45, w: 11.45, h: 4.05,
+          fontFace: "Consolas", fontSize: 15, color: ink, valign: "top",
+          align: "left", margin: 0.08, rtlMode: false, lang: "en", fit: "shrink",
+        });
+      });
+    }
     if (section.table) {
       const slide = contentSlide(section.heading, "Data table");
       const tableRows = [section.table.headers, ...section.table.rows].map((row, rowIndex) => row.map((text) => ({
@@ -388,7 +402,7 @@ export async function renderPptx(document, tokens = extractDesignTokens()) {
         margin: 0.08, autoPage: true, autoPageRepeatHeader: true, rtlMode: rtl,
         valign: "mid",
       });
-    } else if (!chunks.length) {
+    } else if (!chunks.length && section.code === undefined) {
       const slide = contentSlide(section.heading);
       slide.addText("", { x: 0.75, y: 2.25, w: 11.85, h: 4.45, fontFace: font });
     }
