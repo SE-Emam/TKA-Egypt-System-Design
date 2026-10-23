@@ -84,5 +84,5 @@ test("canonical renderer may parse hex tokens but is still scanned for decorativ
   writeFileSync(join(root, "documents/src/renderers.mjs"), 'const invalid = "linear-gradient(red, blue)";\n');
   const rejected = run(root);
   assert.notEqual(rejected.status, 0);
-  assert.match(rejected.stderr, /gradient violation in documents\/src\/renderer\.mjs/);
+  assert.match(rejected.stderr, /gradient violation in documents\/src\/renderers\.mjs/);
 });
