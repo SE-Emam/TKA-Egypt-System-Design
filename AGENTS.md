@@ -19,6 +19,16 @@ These instructions are mandatory for any agent or contributor working in this re
 - No invented gradients, glow, glassmorphism, blur, oversized rounded pills, random floating shapes, decorative charts, fake metrics, or generic AI landing-page sections.
 - Do not add component libraries or dependencies without explaining the functional gap and reviewing bundle, accessibility, license, and maintenance impact.
 
+## Document-system rules
+
+1. Read `docs/document-system.md` before creating DOCX, PDF, Markdown, HTML, or PPTX documents.
+2. Resolve the target project profile under `documents/profiles/`. Use `tka-default` only as an explicit fallback and disclose that fallback.
+3. Treat `panda.config.ts` as the sole executable design-token source. Profiles refer to token names and must not duplicate hex values or override protected TKA anchors.
+4. Keep content separate from presentation and preserve semantic order, language, and direction.
+5. Do not claim a format is supported merely because a template exists. A format is PASS only when its exporter, generated artifact, structural checks, and required visual/RTL checks have evidence.
+6. Run `npm run check:documents` and `npm run check` before reporting completion. Report each format and profile gate as PASS, PARTIAL, or BLOCKED.
+7. Never invent project logos, identity data, fonts, or brand overrides. If a profile is missing or invalid, use the documented default and disclose the fallback.
+
 ## Implementation rules
 
 - Check installed package versions and official docs before writing version-sensitive code. Do not upgrade to a major or beta release without an explicit decision.
