@@ -38,8 +38,14 @@ jobs:
 
       - name: Install system render and font tools
         run: |
-          sudo apt-get update
-          sudo apt-get install --yes --no-install-recommends fonts-dejavu-core libreoffice-writer libreoffice-impress poppler-utils
+          if command -v soffice >/dev/null && command -v pdfinfo >/dev/null && command -v pdftotext >/dev/null && command -v pdftoppm >/dev/null && command -v fc-match >/dev/null && fc-match "DejaVu Sans" | grep -qi "DejaVu Sans"; then
+            echo "Office, Poppler, and DejaVu tools are already available; skipping package installation."
+          else
+            if ! sudo timeout 180s apt-get install --yes --no-install-recommends fonts-dejavu-core libreoffice-writer libreoffice-impress poppler-utils; then
+              sudo timeout 90s apt-get update
+              sudo timeout 180s apt-get install --yes --no-install-recommends fonts-dejavu-core libreoffice-writer libreoffice-impress poppler-utils
+            fi
+          fi
 
       - name: Verify Chromium browser for HTML rendering
         run: |
