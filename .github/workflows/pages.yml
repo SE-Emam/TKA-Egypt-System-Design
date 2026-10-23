@@ -30,6 +30,9 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -45,6 +48,10 @@ jobs:
         run: |
           test -s site/index.html
           ! grep -Eq '__[A-Z0-9_]+__' site/index.html
+      - name: Configure GitHub Pages
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        uses: actions/configure-pages@v5
+
       - name: Upload Pages artifact
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         uses: actions/upload-pages-artifact@v3
