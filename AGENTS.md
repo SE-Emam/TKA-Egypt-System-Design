@@ -2,6 +2,18 @@
 
 These instructions are mandatory for any agent or contributor working in this repository or a product consuming this system.
 
+## Evidence and no-guessing contract
+
+- Treat repository files, verified command output, approved requirements, and explicitly supplied source material as evidence. Do not present assumptions, estimates, generated examples, or model knowledge as verified project facts.
+- Before editing, inspect the actual repository tree, active branch, package scripts, relevant source, and current tests. Never assume a path exists; never silently skip a missing required path.
+- Use exactly three evidence labels in plans and reports: VERIFIED (direct evidence exists), ASSUMPTION (explicitly stated and not treated as fact), and UNKNOWN/BLOCKED (evidence is missing or contradictory).
+- Never invent requirements, user intent, brand values, content, metrics, testimonials, API behavior, compatibility, test results, screenshots, or approvals.
+- If a missing detail affects identity, architecture, security, privacy, data integrity, accessibility, cost, external behavior, or acceptance criteria, stop that decision and ask for clarification. Do not silently choose a default or substitute another behavior.
+- A default is permitted only when it is explicitly declared in the relevant canonical contract/configuration and is appropriate for the current context. Document the source and precedence. Never introduce a local fallback that bypasses a canonical token, recipe, schema, profile, or user decision.
+- Explicitly documented fallbacks (for example, `tka-default` in the document system) may be used only under their stated conditions; disclose use. Invalid or missing mandatory configuration must fail closed.
+- Test success means only the exact commands and cases that actually ran. Separate automated PASS from human visual review, production integration, and other untested gates.
+- If tools or permissions prevent verification, report BLOCKED with the exact missing evidence. Do not claim complete or comprehensive proof based on documentation alone.
+
 ## Before editing
 
 1. Inspect the repository, its active branch, package scripts, and relevant source files. Do not infer the stack or fabricate paths.
