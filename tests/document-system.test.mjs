@@ -131,3 +131,9 @@ test("PPTX preserves code as a separate left-to-right code block", async () => {
   assert.ok(codeSlide, "PPTX must preserve the fixture code block");
   assert.match(codeSlide, /Consolas/);
 });
+
+test("HTML headings use the canonical brand blue", () => {
+  const html = renderDocument(fixture, "html");
+  assert.match(html, /h1\\{font-size:2rem;margin:\\.2rem 0;color:var\\(--tka-brand-blue\\)\\}/);
+  assert.match(html, /h2\\{[^}]*color:var\\(--tka-brand-blue\\)\\}/);
+});
