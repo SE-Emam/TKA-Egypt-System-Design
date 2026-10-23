@@ -1,19 +1,16 @@
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync, existsSync, mkdtempSync, writeFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { spawnSync } from "node:child_process";
 import Ajv2020 from "ajv/dist/2020.js";
-import { dirname, resolve, isAbsolute, relative } from "node:path";
+import { dirname, resolve, relative, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, Table, TableRow, TableCell, WidthType, ShadingType } from "docx";
-import { PDFDocument, rgb } from "pdf-lib";
-import fontkit from "@pdf-lib/fontkit";
-import { shapeArabicText } from "naqqash";
-import bidiFactory from "bidi-js";
 import PptxGenJS from "pptxgenjs";
 import JSZip from "jszip";
 
 export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const PROFILE_DIR = resolve(ROOT, "documents/profiles");
 export const FORMATS = Object.freeze(["docx", "pdf", "markdown", "html", "pptx"]);
-const bidi = bidiFactory();
 const ajv = new Ajv2020({ allErrors: true, strict: false });
 const documentSchema = JSON.parse(readFileSync(resolve(ROOT, "documents/schemas/document.schema.json"), "utf8"));
 const profileSchema = JSON.parse(readFileSync(resolve(ROOT, "documents/schemas/project-profile.schema.json"), "utf8"));
@@ -267,172 +264,34 @@ export async function renderDocx(document, tokens = extractDesignTokens()) {
   return Packer.toBuffer(doc);
 }
 
-function findPdfFont(explicitPath) {
-  const candidates = [
-    explicitPath, process.env.TKA_DOCUMENT_FONT,
-    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-    "/usr/share/fonts/truetype/noto/NotoSansArabic-Regular.ttf",
-    "/usr/share/fonts/truetype/noto/NotoNaskhArabic-Regular.ttf",
-    "/usr/share/fonts/truetype/freefont/FreeSans.ttf",
-    "/System/Library/Fonts/Supplemental/Arial.ttf",
-    "/System/Library/Fonts/Supplemental/Arial Unicode.ttf",
-    "/Library/Fonts/Arial Unicode.ttf",
-    "C:\\Windows\\Fonts\\arial.ttf", "C:\\Windows\\Fonts\\tahoma.ttf",
-  ].filter(Boolean);
-  return candidates.find((candidate) => isAbsolute(candidate) && existsSync(candidate));
-}
-function visualOrder(text, direction) {
-  const shaped = shapeArabicText(String(text));
-  const embedding = bidi.getEmbeddingLevels(shaped, direction);
-  const chars = shaped.split("");
-  for (const [index, replacement] of bidi.getMirroredCharactersMap(shaped, embedding)) if (index < chars.length) chars[index] = replacement;
-  for (const [start, end] of bidi.getReorderSegments(shaped, embedding)) {
-    let left = start, right = end;
-    while (left < right) {
-      [chars[left], chars[right]] = [chars[right], chars[left]];
-      left += 1; right -= 1;
-    }
-  }
-  return chars.join("");
-}
-function toRgb(hex) {
-  const value = hex.replace("#", "");
-  return rgb(parseInt(value.slice(0, 2), 16) / 255, parseInt(value.slice(2, 4), 16) / 255, parseInt(value.slice(4, 6), 16) / 255);
-}
-
-export async function renderPdf(document, tokens = extractDesignTokens(), explicitFontPath) {
+export async function renderPdf(document, tokens = extractDesignTokens()) {
   validateDocument(document);
-  const fontPath = findPdfFont(explicitFontPath);
-  if (!fontPath) fail("PDF needs an Arabic-capable TTF font. Install one or pass --font /absolute/path/to/font.ttf (or set TKA_DOCUMENT_FONT); font files are not bundled.");
-  const pdf = await PDFDocument.create();
-  pdf.registerFontkit(fontkit);
-  const font = await pdf.embedFont(readFileSync(fontPath), { subset: false });
-  const c = tokens.colors;
-  const rtl = document.direction === "rtl";
-  const pageSize = [595.28, 841.89], margin = 48;
-  let page, y;
-  const pages = [];
-  function newPage() {
-    page = pdf.addPage(pageSize);
-    pages.push(page);
-    page.drawText("TKA EGYPT", { x: margin, y: pageSize[1] - 28, size: 8, font, color: toRgb(c.brand500) });
-    page.drawLine({ start: { x: margin, y: pageSize[1] - 36 }, end: { x: pageSize[0] - margin, y: pageSize[1] - 36 }, thickness: 2.2, color: toRgb(c.brand500) });
-    y = pageSize[1] - 60;
-  }
-  function wrap(text, size, maxWidth) {
-    const words = String(text).split(/\s+/).filter(Boolean);
-    if (!words.length) return [""];
-    const out = [];
-    let current = "";
-    for (const word of words) {
-      const candidate = current ? current + " " + word : word;
-      if (current && font.widthOfTextAtSize(visualOrder(candidate, document.direction), size) > maxWidth) {
-        out.push(current); current = word;
-      } else current = candidate;
-      if (!current.includes(" ") && font.widthOfTextAtSize(visualOrder(current, document.direction), size) > maxWidth) {
-        let fragment = "";
-        for (const char of Array.from(current)) {
-          if (fragment && font.widthOfTextAtSize(visualOrder(fragment + char, document.direction), size) > maxWidth) {
-            out.push(fragment); fragment = char;
-          } else fragment += char;
-        }
-        current = fragment;
-      }
+  // LibreOffice applies a mature Arabic shaping and Unicode BiDi pipeline when
+  // rendering the same governed DOCX representation. This avoids emitting a
+  // technically valid PDF whose mixed RTL/LTR glyph order is visually wrong.
+  const workDir = mkdtempSync(join(tmpdir(), "tka-document-pdf-"));
+  const docxPath = join(workDir, "document.docx");
+  const pdfPath = join(workDir, "document.pdf");
+  try {
+    const docx = await renderDocx(document, tokens);
+    writeFileSync(docxPath, docx);
+    const result = spawnSync("soffice", [
+      "--headless", "--convert-to", "pdf", "--outdir", workDir, docxPath,
+    ], { encoding: "utf8", timeout: 120000 });
+    if (result.error?.code === "ENOENT") {
+      fail("PDF export requires LibreOffice (soffice) to be installed and available on PATH.");
     }
-    if (current) out.push(current);
-    return out;
-  }
-  function ensureSpace(height) {
-    if (!page) newPage();
-    if (y - height < margin + 12) newPage();
-  }
-  function drawTextBlock(text, options = {}) {
-    const size = options.size || 10.5;
-    const color = options.color || c.neutral800;
-    const maxWidth = pageSize[0] - margin * 2;
-    for (const rawLine of String(text).split("\n")) {
-      for (const line of wrap(rawLine, size, maxWidth)) {
-        ensureSpace(size * 1.9);
-        if (options.code) page.drawRectangle({ x: margin - 4, y: y - 3, width: maxWidth + 8, height: size * 1.9, color: toRgb(c.neutral50) });
-        const visual = visualOrder(line, options.code ? "ltr" : document.direction);
-        const width = font.widthOfTextAtSize(visual, size);
-        const x = options.code ? margin : (rtl ? Math.max(margin, pageSize[0] - margin - width) : margin);
-        page.drawText(visual, { x, y, size, font, color: toRgb(color), maxWidth });
-        y -= size * (options.code ? 1.9 : 1.65);
-      }
+    if (result.error) fail("LibreOffice PDF export failed to start: " + result.error.message);
+    if (result.status !== 0) {
+      fail("LibreOffice PDF export exited " + result.status + ": " + (result.stderr || result.stdout || "").slice(-1600));
     }
-    y -= options.gap === undefined ? 7 : options.gap;
+    if (!existsSync(pdfPath)) fail("LibreOffice completed without producing the expected PDF artifact.");
+    const output = readFileSync(pdfPath);
+    if (output.subarray(0, 5).toString("ascii") !== "%PDF-") fail("LibreOffice produced an invalid PDF header.");
+    return output;
+  } finally {
+    rmSync(workDir, { recursive: true, force: true });
   }
-
-  function drawTable(table) {
-    const size = 8.5;
-    const availableWidth = pageSize[0] - margin * 2;
-    const columnWidth = availableWidth / table.headers.length;
-    const usablePageHeight = pageSize[1] - margin * 2;
-    function drawRow(values, options = {}) {
-      const lines = values.map((value) => wrap(value, size, Math.max(28, columnWidth - 12)));
-      const lineCount = Math.max(1, ...lines.map((items) => items.length));
-      const rowHeight = Math.max(25, lineCount * 12 + 10);
-      if (rowHeight > usablePageHeight) fail("PDF table row is too tall to fit on one page; split the row in the document content.");
-      const previousPage = page;
-      ensureSpace(rowHeight + 5);
-      if (!options.header && previousPage && page !== previousPage) {
-        drawRow(table.headers, { header: true, repeated: true });
-        ensureSpace(rowHeight + 5);
-      }
-      const top = y;
-      const fill = options.header ? c.brand500 : (options.rowIndex % 2 === 0 ? c.neutral50 : c.neutral0);
-      for (let column = 0; column < values.length; column += 1) {
-        const x = rtl
-          ? pageSize[0] - margin - (column + 1) * columnWidth
-          : margin + column * columnWidth;
-        page.drawRectangle({
-          x, y: top - rowHeight, width: columnWidth, height: rowHeight,
-          color: toRgb(fill), borderColor: toRgb(c.neutral200), borderWidth: 0.5,
-        });
-        for (let lineIndex = 0; lineIndex < lines[column].length; lineIndex += 1) {
-          const visual = visualOrder(lines[column][lineIndex], document.direction);
-          const textWidth = font.widthOfTextAtSize(visual, size);
-          const textX = rtl ? x + columnWidth - 5 - textWidth : x + 5;
-          page.drawText(visual, {
-            x: textX, y: top - 15 - lineIndex * 12, size, font,
-            color: toRgb(options.header ? c.neutral0 : c.neutral800),
-            maxWidth: Math.max(28, columnWidth - 10),
-          });
-        }
-      }
-      y = top - rowHeight - 4;
-    }
-    drawRow(table.headers, { header: true });
-    table.rows.forEach((row, index) => drawRow(row, { rowIndex: index }));
-    y -= 5;
-  }
-  newPage();
-  drawTextBlock(document.title, { size: 23, color: c.brand500, gap: 12, bold: true });
-  page.drawLine({ start: { x: margin, y: y + 2 }, end: { x: pageSize[0] - margin, y: y + 2 }, thickness: 3, color: toRgb(c.brand500) });
-  y -= 5;
-  if (document.description) drawTextBlock(document.description, { size: 12, gap: 10 });
-  drawTextBlock("TKA Egypt · " + document.language + " · " + document.direction.toUpperCase(), { size: 8, gap: 18 });
-  for (const section of document.sections) {
-    ensureSpace(38);
-    drawTextBlock(section.heading, { size: 16, color: c.brand500, gap: 6, bold: true });
-    page.drawLine({ start: { x: margin, y: y + 2 }, end: { x: pageSize[0] - margin, y: y + 2 }, thickness: 0.8, color: toRgb(c.accent500) });
-    y -= 5;
-    for (const text of section.paragraphs || []) drawTextBlock(text, { size: 10.5, gap: 8 });
-    for (const text of section.bullets || []) drawTextBlock("• " + text, { size: 10.5, gap: 4 });
-    if (section.code !== undefined) drawTextBlock(section.code, { size: 9, gap: 10, code: true });
-    if (section.table) drawTable(section.table);
-  }
-  pages.forEach((item, index) => {
-    item.drawLine({ start: { x: margin, y: 30 }, end: { x: pageSize[0] - margin, y: 30 }, thickness: 0.6, color: toRgb(c.neutral200) });
-    item.drawText((index + 1) + " / " + pages.length, { x: pageSize[0] - margin - 36, y: 17, size: 8, font, color: toRgb(c.neutral800) });
-  });
-  pdf.setTitle(document.title);
-  pdf.setAuthor("TKA Egypt");
-  pdf.setSubject("Profile " + document.profile + " · " + document.direction.toUpperCase());
-  pdf.setProducer("TKA Document System");
-  pdf.setLanguage(document.language);
-  return Buffer.from(await pdf.save());
 }
 
 function contentBlocks(section) {
@@ -492,7 +351,8 @@ export async function renderPptx(document, tokens = extractDesignTokens()) {
   if (document.description) cover.addText(document.description, { x: 0.85, y: 3.7, w: 10.9, h: 1.1, fontFace: font, fontSize: 17, color: ink, align: rtl ? "right" : "left", valign: "top", margin: 0.05, rtlMode: rtl, lang: document.language, fit: "shrink" });
   cover.addText(document.language + " · " + document.direction.toUpperCase() + " · " + document.profile, { x: 0.85, y: 6.55, w: 10.5, h: 0.28, fontFace: font, fontSize: 9, color: ink, align: rtl ? "right" : "left", margin: 0, rtlMode: rtl });
   for (const section of document.sections) {
-    const chunks = contentBlocks(section).flatMap((text) => chunkText(text));
+    const combined = contentBlocks(section).join("\n\n");
+    const chunks = combined ? chunkText(combined, 1050) : [];
     if (chunks.length) {
       chunks.forEach((chunk, index) => {
         const slide = contentSlide(section.heading, chunks.length > 1 ? "Part " + (index + 1) + " of " + chunks.length : "");
@@ -533,7 +393,7 @@ export async function renderDocument(document, format, options = {}) {
   if (format === "markdown") return renderMarkdown(document);
   if (format === "html") return renderHtml(document, tokens);
   if (format === "docx") return renderDocx(document, tokens);
-  if (format === "pdf") return renderPdf(document, tokens, options.fontPath);
+  if (format === "pdf") return renderPdf(document, tokens);
   if (format === "pptx") return renderPptx(document, tokens);
   fail("unsupported format " + format);
 }
