@@ -362,6 +362,50 @@ export async function renderPdf(document, tokens = extractDesignTokens(), explic
     }
     y -= options.gap === undefined ? 7 : options.gap;
   }
+
+  function drawTable(table) {
+    const size = 8.5;
+    const availableWidth = pageSize[0] - margin * 2;
+    const columnWidth = availableWidth / table.headers.length;
+    const usablePageHeight = pageSize[1] - margin * 2;
+    function drawRow(values, options = {}) {
+      const lines = values.map((value) => wrap(value, size, Math.max(28, columnWidth - 12)));
+      const lineCount = Math.max(1, ...lines.map((items) => items.length));
+      const rowHeight = Math.max(25, lineCount * 12 + 10);
+      if (rowHeight > usablePageHeight) fail("PDF table row is too tall to fit on one page; split the row in the document content.");
+      const previousPage = page;
+      ensureSpace(rowHeight + 5);
+      if (!options.header && previousPage && page !== previousPage) {
+        drawRow(table.headers, { header: true, repeated: true });
+        ensureSpace(rowHeight + 5);
+      }
+      const top = y;
+      const fill = options.header ? c.brand500 : (options.rowIndex % 2 === 0 ? c.neutral50 : c.neutral0);
+      for (let column = 0; column < values.length; column += 1) {
+        const x = rtl
+          ? pageSize[0] - margin - (column + 1) * columnWidth
+          : margin + column * columnWidth;
+        page.drawRectangle({
+          x, y: top - rowHeight, width: columnWidth, height: rowHeight,
+          color: toRgb(fill), borderColor: toRgb(c.neutral200), borderWidth: 0.5,
+        });
+        for (let lineIndex = 0; lineIndex < lines[column].length; lineIndex += 1) {
+          const visual = visualOrder(lines[column][lineIndex], document.direction);
+          const textWidth = font.widthOfTextAtSize(visual, size);
+          const textX = rtl ? x + columnWidth - 5 - textWidth : x + 5;
+          page.drawText(visual, {
+            x: textX, y: top - 15 - lineIndex * 12, size, font,
+            color: toRgb(options.header ? c.neutral0 : c.neutral800),
+            maxWidth: Math.max(28, columnWidth - 10),
+          });
+        }
+      }
+      y = top - rowHeight - 4;
+    }
+    drawRow(table.headers, { header: true });
+    table.rows.forEach((row, index) => drawRow(row, { rowIndex: index }));
+    y -= 5;
+  }
   newPage();
   drawTextBlock(document.title, { size: 23, color: c.brand500, gap: 12, bold: true });
   page.drawLine({ start: { x: margin, y: y + 2 }, end: { x: pageSize[0] - margin, y: y + 2 }, thickness: 3, color: toRgb(c.brand500) });
@@ -376,11 +420,7 @@ export async function renderPdf(document, tokens = extractDesignTokens(), explic
     for (const text of section.paragraphs || []) drawTextBlock(text, { size: 10.5, gap: 8 });
     for (const text of section.bullets || []) drawTextBlock("• " + text, { size: 10.5, gap: 4 });
     if (section.code !== undefined) drawTextBlock(section.code, { size: 9, gap: 10, code: true });
-    if (section.table) {
-      drawTextBlock(section.table.headers.join("  |  "), { size: 9.5, color: c.brand500, gap: 4, bold: true });
-      for (const row of section.table.rows) drawTextBlock(row.join("  |  "), { size: 9, gap: 4 });
-      y -= 5;
-    }
+    if (section.table) drawTable(section.table);
   }
   pages.forEach((item, index) => {
     item.drawLine({ start: { x: margin, y: 30 }, end: { x: pageSize[0] - margin, y: 30 }, thickness: 0.6, color: toRgb(c.neutral200) });
