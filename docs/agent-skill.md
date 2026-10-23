@@ -36,4 +36,4 @@ Use the skill to produce a Facebook promotional banner from a supplied brief in 
 6. no prohibited generic AI visual tropes;
 7. actual file delivery and truthful evidence-based completion report.
 
-This integration does not itself imply that an image-generation provider, design application, MCP server, or automatic renderer has been connected. Add those integrations later only if a demonstrated workflow requires them.
+The companion read-only MCP server is documented in [docs/mcp-server.md](mcp-server.md). It exposes canonical rules, allowlisted reference reads, and repository image-asset discovery. It does not generate images or claim visual validation. Keep the Skill for workflow guidance; use MCP for structured context and tools.
