@@ -232,7 +232,13 @@ function para(text, options = {}) {
     heading: options.heading,
     bidirectional: options.rtl,
     alignment: directionAlignment(options.rtl),
-    spacing: { before: options.heading ? 180 : 0, after: options.heading ? 100 : 140 },
+    spacing: options.code
+      ? { before: 0, after: 0 }
+      : { before: options.heading ? 180 : 0, after: options.heading ? 100 : 140 },
+    ...(options.code ? {
+      shading: { type: ShadingType.CLEAR, fill: options.codeBackground },
+      indent: { left: 180, right: 180 },
+    } : {}),
     ...(options.bullet ? { bullet: { level: 0 } } : {}),
     children: [run(text, options)],
   });
@@ -249,7 +255,15 @@ export async function renderDocx(document, tokens = extractDesignTokens()) {
     children.push(para(section.heading, { rtl, font: tokens.fontName, size: 28, color: c.brand500.slice(1), bold: true, heading: HeadingLevel.HEADING_1 }));
     for (const text of section.paragraphs || []) children.push(para(text, { rtl, font: tokens.fontName, color: c.neutral800.slice(1) }));
     for (const text of section.bullets || []) children.push(para(text, { rtl, font: tokens.fontName, color: c.neutral800.slice(1), bullet: true }));
-    if (section.code !== undefined) children.push(para(section.code, { rtl: false, font: "Consolas", size: 18, color: c.neutral800.slice(1) }));
+    if (section.code !== undefined) {
+      for (const line of section.code.split("\n")) {
+        children.push(para(line, {
+          rtl: false, font: "Consolas", size: 18, color: c.neutral800.slice(1),
+          code: true, codeBackground: c.neutral50.slice(1),
+        }));
+      }
+      children.push(new Paragraph({ text: "", spacing: { after: 120 } }));
+    }
     if (section.table) {
       const rows = [section.table.headers, ...section.table.rows].map((values, rowIndex) => new TableRow({
         children: (rtl ? values.slice().reverse() : values).map((value) => new TableCell({
