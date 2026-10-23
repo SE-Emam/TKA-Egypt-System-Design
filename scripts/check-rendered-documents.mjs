@@ -43,14 +43,20 @@ for (let index = 0; index < pdfs.length; index += 1) {
   const info = run("pdfinfo", [pdf]);
   const pageMatch = info.match(/^Pages:\s+(\d+)/m);
   if (!pageMatch || Number(pageMatch[1]) < 1) fail("PDF page-count check failed for " + pdf);
+  const pages = Number(pageMatch[1]);
+  if (sourceId === "pptx" && pages > 8) fail("PPTX acceptance fixture produced " + pages + " slides/pages; expected 8 or fewer");
   const textPath = resolve(visualDir, sourceId + "-acceptance-sample.txt");
   run("pdftotext", ["-layout", pdf, textPath]);
   const extracted = normalize((await import("node:fs")).readFileSync(textPath, "utf8"));
   if (!extracted) fail("text extraction is empty for " + pdf);
   if (!extracted.toUpperCase().includes("TKA EGYPT")) fail("document identity was lost during PDF conversion: " + pdf);
+  if (!/[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/u.test(extracted)) fail("Arabic glyph text is missing from the rendered PDF: " + pdf);
+  if (sourceId !== "pdf" && !extracted.includes("عينة عربية للتحقق من الهوية")) fail("Arabic content-preservation check failed after rendering: " + pdf);
   const previewBase = resolve(visualDir, sourceId + "-acceptance-sample-page");
-  run("pdftoppm", ["-f", "1", "-l", "1", "-scale-to", "1400", "-png", pdf, previewBase]);
-  report.push({ file: pdf, pages: Number(pageMatch[1]), extractedTextCharacters: extracted.length, source: sourceId, firstPagePreview: previewBase + "-1.png" });
+  run("pdftoppm", ["-scale-to", "1400", "-png", pdf, previewBase]);
+  const previewFiles = readdirSync(visualDir).filter((name) => name.startsWith(sourceId + "-acceptance-sample-page-") && name.endsWith(".png")).sort();
+  if (previewFiles.length !== pages) fail("page preview count (" + previewFiles.length + ") does not match PDF page count (" + pages + ") for " + pdf);
+  report.push({ file: pdf, pages, extractedTextCharacters: extracted.length, source: sourceId, previewCount: previewFiles.length, previews: previewFiles.map((name) => resolve(visualDir, name)) });
 }
 if (report.length !== 4 || report.some((item) => item.pages < 1)) fail("not all four PDF sources completed the page-count gate");
 writeFileSync(resolve(visualDir, "acceptance-report.json"), JSON.stringify({ status: "PASS", profile: "tka-default", renderCount: report.length, reports: report }, null, 2) + "\n");
