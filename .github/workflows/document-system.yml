@@ -27,8 +27,6 @@ jobs:
     name: real-export-and-render-acceptance
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    env:
-      TKA_DOCUMENT_FONT: /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf
     steps:
       - name: Check out source
         uses: actions/checkout@v4
