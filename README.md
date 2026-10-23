@@ -21,7 +21,7 @@ The brand colors are not interchangeable: blue carries primary actions and links
 
 ## Start here
 
-- [Design system showcase](https://se-emam.github.io/TKA-Egypt-System-Design/) — published reference for tokens, typography, accessible controls, dark mode, and RTL/LTR behavior.
+- [Design system showcase](https://se-emam.github.io/TKA-Egypt-System-Design/) — reference for tokens, typography, accessible controls, dark mode, and RTL/LTR behavior; deployment is handled by the main-branch GitHub Pages workflow.
 
 1. [Brand and visual language](docs/brand-and-visual-language.md)
 2. [Anti-AI-Slop rules](docs/anti-ai-slop.md)
