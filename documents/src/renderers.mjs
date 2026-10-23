@@ -397,7 +397,6 @@ export async function renderPdf(document, tokens = extractDesignTokens(), explic
 function contentBlocks(section) {
   const blocks = [...(section.paragraphs || []), ...(section.bullets || []).map((item) => "• " + item)];
   if (section.code !== undefined) blocks.push(section.code);
-  if (section.table) blocks.push([section.table.headers.join(" | "), ...section.table.rows.map((row) => row.join(" | "))].join("\n"));
   return blocks;
 }
 function chunkText(text, limit = 520) {
@@ -453,10 +452,32 @@ export async function renderPptx(document, tokens = extractDesignTokens()) {
   cover.addText(document.language + " · " + document.direction.toUpperCase() + " · " + document.profile, { x: 0.85, y: 6.55, w: 10.5, h: 0.28, fontFace: font, fontSize: 9, color: ink, align: rtl ? "right" : "left", margin: 0, rtlMode: rtl });
   for (const section of document.sections) {
     const chunks = contentBlocks(section).flatMap((text) => chunkText(text));
-    (chunks.length ? chunks : [""]).forEach((chunk, index) => {
-      const slide = contentSlide(section.heading, chunks.length > 1 ? "Part " + (index + 1) + " of " + chunks.length : "");
-      slide.addText(chunk, { x: 0.75, y: 2.25, w: 11.85, h: 4.45, fontFace: font, fontSize: 18, color: ink, valign: "top", align: rtl ? "right" : "left", paraSpaceAfterPt: 10, margin: 0.1, rtlMode: rtl, lang: document.language, fit: "shrink" });
-    });
+    if (chunks.length) {
+      chunks.forEach((chunk, index) => {
+        const slide = contentSlide(section.heading, chunks.length > 1 ? "Part " + (index + 1) + " of " + chunks.length : "");
+        slide.addText(chunk, { x: 0.75, y: 2.25, w: 11.85, h: 4.45, fontFace: font, fontSize: 18, color: ink, valign: "top", align: rtl ? "right" : "left", paraSpaceAfterPt: 10, margin: 0.1, rtlMode: rtl, lang: document.language, fit: "shrink" });
+      });
+    }
+    if (section.table) {
+      const slide = contentSlide(section.heading, "Data table");
+      const tableRows = [section.table.headers, ...section.table.rows].map((row, rowIndex) => row.map((text) => ({
+        text,
+        options: rowIndex === 0
+          ? { bold: true, color: white, fill: { color: blue }, align: rtl ? "right" : "left" }
+          : { color: ink, fill: { color: white }, align: rtl ? "right" : "left" },
+      })));
+      const columnWidth = 11.85 / section.table.headers.length;
+      slide.addTable(tableRows, {
+        x: 0.75, y: 2.25, w: 11.85, colW: section.table.headers.map(() => columnWidth),
+        rowH: 0.52, fontFace: font, fontSize: 13, color: ink,
+        border: { type: "solid", pt: 0.6, color: c.neutral200.slice(1) },
+        margin: 0.08, autoPage: true, autoPageRepeatHeader: true, rtlMode: rtl,
+        valign: "mid",
+      });
+    } else if (!chunks.length) {
+      const slide = contentSlide(section.heading);
+      slide.addText("", { x: 0.75, y: 2.25, w: 11.85, h: 4.45, fontFace: font });
+    }
   }
   return Buffer.from(await pptx.write({ outputType: "nodebuffer" }));
 }
@@ -492,7 +513,9 @@ export async function inspectOfficePackage(buffer, format) {
   if (format === "pptx") {
     const xml = await zip.file("ppt/presentation.xml").async("string");
     if (!xml.includes("p:presentation")) fail("PPTX presentation.xml is invalid");
-    return { entries: Object.keys(zip.files).length, slides: Object.keys(zip.files).filter((name) => /^ppt\/slides\/slide\d+\.xml$/.test(name)).length, presentationXml: xml };
+    const slidePaths = Object.keys(zip.files).filter((name) => /^ppt\/slides\/slide\d+\.xml$/.test(name)).sort((a, b) => Number(a.match(/slide(\d+)/)[1]) - Number(b.match(/slide(\d+)/)[1]));
+    const slideXmls = await Promise.all(slidePaths.map((name) => zip.file(name).async("string")));
+    return { entries: Object.keys(zip.files).length, slides: slidePaths.length, presentationXml: xml, slideXmls };
   }
   return { entries: Object.keys(zip.files).length };
 }
