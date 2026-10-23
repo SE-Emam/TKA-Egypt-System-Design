@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-import { createReadStream } from "node:fs";
 import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
