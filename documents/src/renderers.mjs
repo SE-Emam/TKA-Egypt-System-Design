@@ -36,7 +36,7 @@ export function extractDesignTokens(configSource = readFileSync(resolve(ROOT, "p
   }
   const endFontText = configSource.indexOf("        fontSizes:", fontsStart);
   const fontText = configSource.slice(fontsStart, endFontText > -1 ? endFontText : configSource.length);
-  const bodyFont = fontText.match(/^ {10}body: \\{[\\s\\S]*?^ {12}value: ['"]([^'"]+)['"]/m);
+  const bodyFont = fontText.match(/^ {10}body: \{[\s\S]*?^ {12}value: ['"]([^'"]+)['"]/m);
   const fontName = bodyFont && bodyFont[1].match(/"([^"]+)"/)?.[1];
   if (!fontName) fail("canonical fonts.body token is missing");
   const colors = {
