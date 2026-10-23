@@ -27,7 +27,7 @@ function fixture(t, showcaseSource = "<html><body>Real product content</body></h
   mkdirSync(join(dir, "showcase"), { recursive: true });
   writeFileSync(join(dir, "showcase/index.template.html"), showcaseSource);
   mkdirSync(join(dir, "documents/src"), { recursive: true });
-  writeFileSync(join(dir, "documents/src/renderer.mjs"), "export const renderer = true;\n");
+  writeFileSync(join(dir, "documents/src/renderers.mjs"), "export const renderer = true;\n");
   return dir;
 }
 function run(root) {
@@ -70,7 +70,7 @@ test("scanner fails closed when a required scan root is absent", (t) => {
 test("scanner refuses a vacuous pass when scan roots contain no source files", (t) => {
   const root = fixture(t);
   rmSync(join(root, "showcase/index.template.html"));
-  rmSync(join(root, "documents/src/renderer.mjs"));
+  rmSync(join(root, "documents/src/renderers.mjs"));
   const result = run(root);
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /No production UI\/document source files were scanned/);
@@ -78,10 +78,10 @@ test("scanner refuses a vacuous pass when scan roots contain no source files", (
 
 test("canonical renderer may parse hex tokens but is still scanned for decorative violations", (t) => {
   const root = fixture(t);
-  writeFileSync(join(root, "documents/src/renderer.mjs"), 'const validToken = /^#[0-9a-f]{6}$/i;\n');
+  writeFileSync(join(root, "documents/src/renderers.mjs"), 'const validToken = /^#[0-9a-f]{6}$/i;\n');
   const result = run(root);
   assert.equal(result.status, 0, result.stderr);
-  writeFileSync(join(root, "documents/src/renderer.mjs"), 'const invalid = "linear-gradient(red, blue)";\n');
+  writeFileSync(join(root, "documents/src/renderers.mjs"), 'const invalid = "linear-gradient(red, blue)";\n');
   const rejected = run(root);
   assert.notEqual(rejected.status, 0);
   assert.match(rejected.stderr, /gradient violation in documents\/src\/renderer\.mjs/);
