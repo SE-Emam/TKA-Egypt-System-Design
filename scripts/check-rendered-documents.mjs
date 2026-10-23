@@ -39,17 +39,18 @@ const pdfs = [
 const report = [];
 for (let index = 0; index < pdfs.length; index += 1) {
   const pdf = pdfs[index];
+  const sourceId = index === 0 ? "pdf" : ["docx", "pptx", "html"][index - 1];
   const info = run("pdfinfo", [pdf]);
   const pageMatch = info.match(/^Pages:\s+(\d+)/m);
   if (!pageMatch || Number(pageMatch[1]) < 1) fail("PDF page-count check failed for " + pdf);
-  const textPath = resolve(visualDir, basename(pdf, ".pdf") + ".txt");
+  const textPath = resolve(visualDir, sourceId + "-acceptance-sample.txt");
   run("pdftotext", ["-layout", pdf, textPath]);
   const extracted = normalize((await import("node:fs")).readFileSync(textPath, "utf8"));
   if (!extracted) fail("text extraction is empty for " + pdf);
   if (!extracted.toUpperCase().includes("TKA EGYPT")) fail("document identity was lost during PDF conversion: " + pdf);
-  const previewBase = resolve(visualDir, basename(pdf, ".pdf") + "-page");
+  const previewBase = resolve(visualDir, sourceId + "-acceptance-sample-page");
   run("pdftoppm", ["-f", "1", "-l", "1", "-scale-to", "1400", "-png", pdf, previewBase]);
-  report.push({ file: pdf, pages: Number(pageMatch[1]), extractedTextCharacters: extracted.length, firstPagePreview: previewBase + "-1.png" });
+  report.push({ file: pdf, pages: Number(pageMatch[1]), extractedTextCharacters: extracted.length, source: sourceId, firstPagePreview: previewBase + "-1.png" });
 }
 if (report.length !== 4 || report.some((item) => item.pages < 1)) fail("not all four PDF sources completed the page-count gate");
 writeFileSync(resolve(visualDir, "acceptance-report.json"), JSON.stringify({ status: "PASS", profile: "tka-default", renderCount: report.length, reports: report }, null, 2) + "\n");
