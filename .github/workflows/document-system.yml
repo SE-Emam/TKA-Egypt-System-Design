@@ -1,0 +1,71 @@
+name: TKA document-system acceptance
+
+on:
+  pull_request:
+    paths:
+      - "documents/**"
+      - "scripts/**"
+      - "tests/**"
+      - "docs/document-system.md"
+      - "AGENTS.md"
+      - "package.json"
+      - "panda.config.ts"
+      - ".github/workflows/document-system.yml"
+  push:
+    branches: [main, feat/tka-document-system-foundation]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: document-system-\${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  acceptance:
+    name: real-export-and-render-acceptance
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      TKA_DOCUMENT_FONT: /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install system render and font tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends fonts-dejavu-core libreoffice-writer libreoffice-impress poppler-utils
+
+      - name: Install pinned project dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Run document-system policy and export tests
+        run: npm run check:documents
+
+      - name: Run complete TKA design-system quality gates
+        run: npm run check
+
+      - name: Generate real artifacts in all five formats
+        run: npm run docs:fixtures -- --out .test-artifacts/documents
+
+      - name: Render Office and HTML outputs, extract text, and create page previews
+        run: npm run docs:visual-check -- .test-artifacts/documents
+
+      - name: Upload generated acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tka-document-system-acceptance
+          path: |
+            .test-artifacts/documents/
+            .test-artifacts/previews/
+            .test-artifacts/office-pdf/
+          if-no-files-found: warn
+          retention-days: 14
