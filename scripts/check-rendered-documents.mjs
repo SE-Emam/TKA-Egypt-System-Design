@@ -8,8 +8,8 @@ const conversionDir = resolve(".test-artifacts/office-pdf");
 const required = ["acceptance-sample.md", "acceptance-sample.html", "acceptance-sample.docx", "acceptance-sample.pdf", "acceptance-sample.pptx"];
 const fail = (message) => { throw new Error("Rendered document acceptance failed: " + message); };
 for (const file of required) if (!existsSync(resolve(artifactDir, file))) fail("missing generated file " + file);
-for (const command of ["soffice", "pdfinfo", "pdftotext", "pdftoppm"]) {
-  const check = spawnSync(command, ["--version"], { encoding: "utf8" });
+for (const [command, versionArgs] of [["soffice", ["--version"]], ["pdfinfo", ["-v"]], ["pdftotext", ["-v"]], ["pdftoppm", ["-v"]]]) {
+  const check = spawnSync(command, versionArgs, { encoding: "utf8" });
   if (check.error && check.error.code === "ENOENT") fail("required visual-validation utility is unavailable: " + command);
 }
 mkdirSync(visualDir, { recursive: true });
@@ -23,7 +23,7 @@ function run(command, args) {
 function normalize(value) { return value.normalize("NFKC").replace(/\s+/g, " ").trim(); }
 const markdown = normalize((await import("node:fs")).readFileSync(resolve(artifactDir, "acceptance-sample.md"), "utf8"));
 const html = (await import("node:fs")).readFileSync(resolve(artifactDir, "acceptance-sample.html"), "utf8");
-if (!markdown.includes("قبول نظام مستندات TKA") || !markdown.includes("المخرجات الخمس")) fail("Markdown content-preservation check did not find the Arabic fixture text");
+if (!markdown.includes("قبول نظام مستندات TKA") || !markdown.includes("مخرجات المستندات")) fail("Markdown content-preservation check did not find the Arabic fixture text");
 if (!html.includes('lang="ar" dir="rtl"') || !html.includes("--tka-brand-blue:#0846ED") || !html.includes("--tka-brand-yellow:#FEB700")) fail("HTML direction/canonical brand-token check failed");
 for (const source of ["acceptance-sample.docx", "acceptance-sample.pptx", "acceptance-sample.html"]) {
   const result = run("soffice", ["--headless", "--convert-to", "pdf", "--outdir", conversionDir, resolve(artifactDir, source)]);
