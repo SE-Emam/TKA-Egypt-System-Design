@@ -137,3 +137,18 @@ test("HTML headings use the canonical brand blue", async () => {
   assert.match(html, /h1\{font-size:2rem;margin:\.2rem 0;color:var\(--tka-brand-blue\)\}/);
   assert.match(html, /h2\{[^}]*color:var\(--tka-brand-blue\)\}/);
 });
+
+test("DOCX code is split into shaded LTR monospace paragraphs", async () => {
+  const artifact = await renderDocument(fixture, "docx");
+  const inspected = await inspectOfficePackage(artifact, "docx");
+  const xml = inspected.documentXml;
+  const codeIndex = xml.indexOf("console.log");
+  assert.ok(codeIndex > 0, "DOCX must preserve the second code line");
+  const paragraphStart = xml.lastIndexOf("<w:p", codeIndex);
+  const paragraphEnd = xml.indexOf("</w:p>", codeIndex) + "</w:p>".length;
+  const codeParagraph = xml.slice(paragraphStart, paragraphEnd);
+  assert.match(codeParagraph, /w:shd/);
+  assert.match(codeParagraph, /Consolas/);
+  assert.match(codeParagraph, /console\.log/);
+  assert.match(xml, /<w:t[^>]*>const brand/);
+});
