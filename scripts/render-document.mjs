@@ -19,7 +19,7 @@ async function main() {
   if (!input || !format || !output) throw new Error("--input, --format, and --out are required");
   if (!FORMATS.includes(format)) throw new Error("Unsupported format " + format + ". Supported: " + FORMATS.join(", "));
   const document = JSON.parse(readFileSync(resolve(input), "utf8"));
-  if (profileId) document.profile = profileId;
+  // Keep the content contract authoritative: a selected profile must match the document profile.
   const bytes = await renderDocument(document, format, { profileId: profileId || document.profile });
   const destination = resolve(output);
   const expectedExtension = format === "markdown" ? ".md" : "." + format;
