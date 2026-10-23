@@ -9,19 +9,18 @@ function argument(name, fallback) {
 }
 async function main() {
   if (process.argv.includes("--help") || process.argv.includes("-h")) {
-    console.log("Usage: npm run docs:render -- --input ./document.json --format markdown|html|docx|pdf|pptx --out ./output.ext [--profile tka-default] [--font /absolute/path/font.ttf]");
+    console.log("Usage: npm run docs:render -- --input ./document.json --format markdown|html|docx|pdf|pptx --out ./output.ext [--profile tka-default]");
     return;
   }
   const input = argument("--input");
   const format = argument("--format");
   const output = argument("--out");
   const profileId = argument("--profile");
-  const fontPath = argument("--font");
   if (!input || !format || !output) throw new Error("--input, --format, and --out are required");
   if (!FORMATS.includes(format)) throw new Error("Unsupported format " + format + ". Supported: " + FORMATS.join(", "));
   const document = JSON.parse(readFileSync(resolve(input), "utf8"));
   if (profileId) document.profile = profileId;
-  const bytes = await renderDocument(document, format, { profileId: profileId || document.profile, fontPath });
+  const bytes = await renderDocument(document, format, { profileId: profileId || document.profile });
   const destination = resolve(output);
   const expectedExtension = format === "markdown" ? ".md" : "." + format;
   if (extname(destination).toLowerCase() !== expectedExtension) throw new Error("Output file extension must be " + expectedExtension);
