@@ -114,3 +114,12 @@ test("canonical brand-anchor drift fails closed", () => {
   const source = readFileSync(new URL("../panda.config.ts", import.meta.url), "utf8");
   assert.throws(() => extractDesignTokens(source.replace("#0846ED", "#0055AA")), /canonical TKA anchors changed/);
 });
+
+test("design tokens expose canonical dark-surface and status colors for the showcase", () => {
+  const tokens = extractDesignTokens();
+  assert.equal(tokens.colors.brand300, "#8DAEFF");
+  assert.equal(tokens.colors.neutral950, "#0E131B");
+  assert.equal(tokens.colors.green50, "#E9F8EF");
+  assert.equal(tokens.colors.amber50, "#FFF5D6");
+  assert.equal(tokens.colors.red50, "#FFF0EF");
+});
