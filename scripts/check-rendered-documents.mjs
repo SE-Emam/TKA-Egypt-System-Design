@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync, readdirSync, writeFileSync, rmSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { basename, extname, resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 
 const artifactDir = resolve(process.argv[2] || ".test-artifacts/documents");
 const visualDir = resolve(".test-artifacts/previews");
@@ -12,6 +13,12 @@ for (const [command, versionArgs] of [["soffice", ["--version"]], ["pdfinfo", ["
   const check = spawnSync(command, versionArgs, { encoding: "utf8" });
   if (check.error && check.error.code === "ENOENT") fail("required visual-validation utility is unavailable: " + command);
 }
+const browserCandidates = ["google-chrome", "google-chrome-stable", "chromium", "chromium-browser"];
+const browserCommand = browserCandidates.find((command) => {
+  const check = spawnSync(command, ["--version"], { encoding: "utf8" });
+  return !check.error && check.status === 0;
+});
+if (!browserCommand) fail("a Chromium-compatible browser is required to validate actual HTML rendering");
 rmSync(visualDir, { recursive: true, force: true });
 rmSync(conversionDir, { recursive: true, force: true });
 mkdirSync(visualDir, { recursive: true });
@@ -30,9 +37,18 @@ if (!html.includes('lang="ar" dir="rtl"') || !html.includes("--tka-brand-blue:#0
 for (const source of ["acceptance-sample.docx", "acceptance-sample.pptx", "acceptance-sample.html"]) {
   const formatDir = resolve(conversionDir, extname(source).slice(1));
   mkdirSync(formatDir, { recursive: true });
-  const result = run("soffice", ["--headless", "--convert-to", "pdf", "--outdir", formatDir, resolve(artifactDir, source)]);
   const pdf = resolve(formatDir, basename(source, extname(source)) + ".pdf");
-  if (!existsSync(pdf)) fail("LibreOffice did not create PDF rendering for " + source + ". " + result);
+  if (source.endsWith(".html")) {
+    run(browserCommand, [
+      "--headless", "--no-sandbox", "--disable-gpu", "--disable-dev-shm-usage",
+      "--no-pdf-header-footer", "--print-to-pdf=" + pdf,
+      pathToFileURL(resolve(artifactDir, source)).href,
+    ]);
+    if (!existsSync(pdf)) fail(browserCommand + " did not create a browser-rendered PDF for " + source);
+  } else {
+    const result = run("soffice", ["--headless", "--convert-to", "pdf", "--outdir", formatDir, resolve(artifactDir, source)]);
+    if (!existsSync(pdf)) fail("LibreOffice did not create PDF rendering for " + source + ". " + result);
+  }
 }
 const pdfs = [
   resolve(artifactDir, "acceptance-sample.pdf"),
@@ -58,8 +74,8 @@ for (let index = 0; index < pdfs.length; index += 1) {
   run("pdftoppm", ["-scale-to", "1400", "-png", pdf, previewBase]);
   const previewFiles = readdirSync(visualDir).filter((name) => name.startsWith(sourceId + "-acceptance-sample-page-") && name.endsWith(".png")).sort();
   if (previewFiles.length !== pages) fail("page preview count (" + previewFiles.length + ") does not match PDF page count (" + pages + ") for " + pdf);
-  report.push({ file: pdf, pages, extractedTextCharacters: extracted.length, source: sourceId, previewCount: previewFiles.length, previews: previewFiles.map((name) => resolve(visualDir, name)) });
+  report.push({ file: pdf, pages, extractedTextCharacters: extracted.length, source: sourceId, renderer: sourceId === "html" ? browserCommand : sourceId === "pdf" ? "LibreOffice from DOCX" : "LibreOffice", previewCount: previewFiles.length, previews: previewFiles.map((name) => resolve(visualDir, name)) });
 }
 if (report.length !== 4 || report.some((item) => item.pages < 1)) fail("not all four PDF sources completed the page-count gate");
 writeFileSync(resolve(visualDir, "acceptance-report.json"), JSON.stringify({ status: "PASS", profile: "tka-default", renderCount: report.length, reports: report }, null, 2) + "\n");
-console.log(JSON.stringify({ status: "PASS", artifacts: required.length, officeAndHtmlConversions: 3, validatedPdfRenders: report.length, report: resolve(visualDir, "acceptance-report.json") }, null, 2));
+console.log(JSON.stringify({ status: "PASS", artifacts: required.length, officeConversions: 2, browserHtmlRender: browserCommand, validatedPdfRenders: report.length, report: resolve(visualDir, "acceptance-report.json") }, null, 2));
