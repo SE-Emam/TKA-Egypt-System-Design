@@ -1,4 +1,5 @@
 import { readFileSync, existsSync } from "node:fs";
+import Ajv2020 from "ajv/dist/2020.js";
 import { dirname, resolve, isAbsolute } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, Table, TableRow, TableCell, WidthType, ShadingType } from "docx";
@@ -13,6 +14,11 @@ export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const PROFILE_DIR = resolve(ROOT, "documents/profiles");
 export const FORMATS = Object.freeze(["docx", "pdf", "markdown", "html", "pptx"]);
 const bidi = bidiFactory();
+const ajv = new Ajv2020({ allErrors: true, strict: false });
+const documentSchema = JSON.parse(readFileSync(resolve(ROOT, "documents/schemas/document.schema.json"), "utf8"));
+const profileSchema = JSON.parse(readFileSync(resolve(ROOT, "documents/schemas/project-profile.schema.json"), "utf8"));
+const validateDocumentSchema = ajv.compile(documentSchema);
+const validateProfileSchema = ajv.compile(profileSchema);
 
 function fail(message) {
   throw new Error("TKA Document System: " + message);
@@ -65,6 +71,7 @@ export function loadProfile(profileId = "tka-default") {
     fail("profile " + profileId + " does not exist; no implicit identity fallback is allowed");
   }
   const profile = JSON.parse(readFileSync(file, "utf8"));
+  if (!validateProfileSchema(profile)) fail("profile " + profileId + " does not satisfy project-profile schema: " + ajv.errorsText(validateProfileSchema.errors, { separator: "; " }));
   if (profile.id !== profileId) fail("profile file/id mismatch for " + profileId);
   if (profile.brand?.tokenSource !== "panda.config.ts" || profile.brand?.allowAnchorOverrides !== false) {
     fail("profile " + profileId + " changes or bypasses the canonical token source");
@@ -114,6 +121,7 @@ function validateSection(section, index) {
 
 export function validateDocument(document) {
   if (!document || typeof document !== "object" || Array.isArray(document)) fail("document must be a JSON object");
+  if (!validateDocumentSchema(document)) fail("document does not satisfy document schema: " + ajv.errorsText(validateDocumentSchema.errors, { separator: "; " }));
   onlyKeys(document, DOC_FIELDS, "document");
   nonEmptyText(document.title, "title");
   nonEmptyText(document.language, "language");
