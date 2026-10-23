@@ -56,3 +56,14 @@ test("architecture documents one executable token source of truth", () => {
   assert.match(architecture, /panda\.config\.ts.*owns executable tokens/s);
   assert.match(architecture, /Do not maintain a parallel hand-written palette/);
 });
+
+test("dark-mode focus and status indicators retain accessible contrast", () => {
+  assert.ok(contrast("#8DAEFF", "#0E131B") >= 3, "brand.300 focus ring on the dark canvas must reach 3:1");
+  assert.ok(contrast("#17663A", "#FFFFFF") >= 4.5, "success text on white must reach 4.5:1");
+  assert.ok(contrast("#7A4D00", "#FFFFFF") >= 4.5, "warning text on white must reach 4.5:1");
+  assert.ok(contrast("#B42318", "#FFFFFF") >= 4.5, "danger text on white must reach 4.5:1");
+  assert.ok(contrast("#E9F8EF", "#0E131B") >= 4.5, "dark-mode success text must reach 4.5:1");
+  assert.ok(contrast("#FFF5D6", "#0E131B") >= 4.5, "dark-mode warning text must reach 4.5:1");
+  assert.ok(contrast("#FFF0EF", "#0E131B") >= 4.5, "dark-mode danger text must reach 4.5:1");
+  assert.match(config, /focusRing:\s*\{ value: \{ base: "\{colors\.brand\.500\}", _dark: "\{colors\.brand\.300\}" \} \}/);
+});

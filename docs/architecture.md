@@ -43,6 +43,18 @@ Use Panda CSS stable v1 configuration for this baseline. Do not introduce Panda 
 - Every recipe must document variants, defaults, keyboard/focus behavior, states, and appropriate use.
 - Avoid dozens of variants. Variants represent meaningful product decisions, not every CSS property.
 
+## Governed document generation
+
+The document subsystem is a consumer of the design-token layer, not a second design system:
+
+1. JSON Schema and runtime checks validate semantic content and the selected project profile.
+2. The explicit profile controls document metadata, language, direction, and supported formats only.
+3. `documents/src/renderers.mjs` extracts approved tokens from `panda.config.ts` and generates Markdown, HTML, DOCX, PDF, and PPTX.
+4. Acceptance tests validate artifacts and OOXML/PDF structure. A dedicated CI workflow converts Office/HTML outputs with LibreOffice, checks PDF text and page counts with Poppler, and uploads first-page previews.
+5. Human preview review remains a distinct gate; automation must never report visual acceptance solely from successful file generation.
+
+Profiles may not define an alternate palette, font token source, or brand identity. The protected TKA anchors are checked at runtime, and profile selection fails closed if the profile does not validate.
+
 ## Change control
 
 Brand anchors, semantic-role meaning, default variants, focus behavior, and quality gates are system-level decisions. Propose them in a pull request with a rationale and verification; do not change them incidentally during feature work.

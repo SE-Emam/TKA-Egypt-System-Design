@@ -125,7 +125,7 @@ export default defineConfig({
           onActionPrimary: { value: "{colors.neutral.0}" },
           accent: { value: "{colors.accent.500}" },
           onAccent: { value: "{colors.neutral.900}" },
-          focusRing: { value: "{colors.brand.500}" },
+          focusRing: { value: { base: "{colors.brand.500}", _dark: "{colors.brand.300}" } },
           success: { value: "{colors.green.700}" },
           successSurface: { value: { base: "{colors.green.50}", _dark: "{colors.green.900}" } },
           warning: { value: "{colors.amber.800}" },

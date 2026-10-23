@@ -21,6 +21,8 @@ The brand colors are not interchangeable: blue carries primary actions and links
 
 ## Start here
 
+- [Design system showcase](https://se-emam.github.io/TKA-Egypt-System-Design/) — published reference for tokens, typography, accessible controls, dark mode, and RTL/LTR behavior.
+
 1. [Brand and visual language](docs/brand-and-visual-language.md)
 2. [Anti-AI-Slop rules](docs/anti-ai-slop.md)
 3. [Architecture and token contract](docs/architecture.md)
@@ -34,6 +36,7 @@ Requires Node.js 22+ and npm.
 ```sh
 npm install
 npm run check
+npm run showcase:build
 ```
 
 The check pipeline validates brand invariants, contrast expectations, architecture documentation, static anti-slop rules, TypeScript configuration, and Panda CSS code generation. The generated `styled-system/` directory is build output; do not hand-edit or commit it.
@@ -45,3 +48,20 @@ Changes to brand colors, semantic meanings, component recipes, exceptions, or ac
 ## Status
 
 This repository was empty at the start of the bootstrap. This pull request establishes the baseline system contract and tooling; it does not imply that any separate TKA product site has already integrated it.
+
+## Governed document generation
+
+This design system also includes a profile-governed document renderer for Arabic RTL and explicit LTR documents. One validated content contract can generate Markdown, HTML, DOCX, PDF, and PPTX; the exporters derive brand tokens from `panda.config.ts`, not a parallel color palette.
+
+- [Document-system architecture and acceptance gates](docs/document-system.md)
+- [Default TKA document profile](documents/profiles/tka-default.json)
+- [Real Arabic RTL acceptance fixture](documents/examples/acceptance-sample.json)
+
+```sh
+npm install
+npm run check:documents
+npm run docs:fixtures -- --out .test-artifacts/documents
+npm run docs:visual-check -- .test-artifacts/documents
+```
+
+Generate a single document with `npm run docs:render -- --input documents/examples/acceptance-sample.json --format html --out output/report.html`. The PDF export requires an Arabic-capable TrueType font; the CI workflow installs DejaVu and performs LibreOffice/Poppler rendering checks. Read the document-system guide for the five formats, font setup, and the evidence required before calling a release accepted.
