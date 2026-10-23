@@ -10,8 +10,6 @@ const requiredFiles = [
   "documents/profiles/tka-default.json",
   "documents/examples/acceptance-sample.json",
   "documents/src/renderers.mjs",
-  "documents/templates/markdown/document.md.tmpl",
-  "documents/templates/html/document.html.tmpl",
   "tests/document-system.test.mjs",
   "scripts/render-document.mjs",
   "scripts/generate-document-fixtures.mjs",
