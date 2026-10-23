@@ -27,12 +27,12 @@ if (!markdown.includes("قبول نظام مستندات TKA") || !markdown.incl
 if (!html.includes('lang="ar" dir="rtl"') || !html.includes("--tka-brand-blue:#0846ED") || !html.includes("--tka-brand-yellow:#FEB700")) fail("HTML direction/canonical brand-token check failed");
 for (const source of ["acceptance-sample.docx", "acceptance-sample.pptx", "acceptance-sample.html"]) {
   const result = run("soffice", ["--headless", "--convert-to", "pdf", "--outdir", conversionDir, resolve(artifactDir, source)]);
-  const pdf = resolve(conversionDir, basename(source, extname(source)) + ".pdf");
+  const pdf = resolve(conversionDir, extname(source).slice(1) + "-" + basename(source, extname(source)) + ".pdf");
   if (!existsSync(pdf)) fail("LibreOffice did not create PDF rendering for " + source + ". " + result);
 }
 const pdfs = [
   resolve(artifactDir, "acceptance-sample.pdf"),
-  ...["acceptance-sample.docx", "acceptance-sample.pptx", "acceptance-sample.html"].map((source) => resolve(conversionDir, basename(source, extname(source)) + ".pdf")),
+  ...["acceptance-sample.docx", "acceptance-sample.pptx", "acceptance-sample.html"].map((source) => resolve(conversionDir, extname(source).slice(1) + "-" + basename(source, extname(source)) + ".pdf")),
 ];
 const report = [];
 for (let index = 0; index < pdfs.length; index += 1) {
@@ -49,7 +49,6 @@ for (let index = 0; index < pdfs.length; index += 1) {
   run("pdftoppm", ["-f", "1", "-l", "1", "-scale-to", "1400", "-png", pdf, previewBase]);
   report.push({ file: pdf, pages: Number(pageMatch[1]), extractedTextCharacters: extracted.length, firstPagePreview: previewBase + "-1.png" });
 }
-const htmlPageCount = Number(report.find((item) => item.file.endsWith("acceptance-sample.html.pdf"))?.pages || 1);
-if (!report.length || htmlPageCount < 1) fail("visual render report is empty");
+if (report.length !== 4 || report.some((item) => item.pages < 1)) fail("not all four PDF sources completed the page-count gate");
 writeFileSync(resolve(visualDir, "acceptance-report.json"), JSON.stringify({ status: "PASS", profile: "tka-default", renderCount: report.length, reports: report }, null, 2) + "\n");
 console.log(JSON.stringify({ status: "PASS", artifacts: required.length, officeAndHtmlConversions: 3, validatedPdfRenders: report.length, report: resolve(visualDir, "acceptance-report.json") }, null, 2));
