@@ -95,6 +95,7 @@ test("all five exporters produce a real non-empty artifact with required structu
       assert.ok(inspected.entries > 5);
       assert.ok(inspected.slides >= 2, "cover and at least one content slide are expected");
       assert.match(inspected.presentationXml, /p:presentation/);
+      assert.ok(inspected.slideXmls.some((xml) => xml.includes("<a:tbl")), "PPTX table must be a native Office table, not flattened pipe-delimited text");
       continue;
     }
     if (format === "pdf") {
