@@ -1,0 +1,16 @@
+{
+  "$schema": "../schemas/project-profile.schema.json",
+  "id": "tka-default",
+  "name": "TKA Egypt",
+  "extends": null,
+  "brand": {
+    "tokenSource": "panda.config.ts",
+    "protectedAnchors": ["brand.500", "accent.500"],
+    "allowAnchorOverrides": false
+  },
+  "documentDefaults": {
+    "language": "ar",
+    "direction": "rtl",
+    "formats": ["docx", "pdf", "markdown", "html", "pptx"]
+  }
+}
