@@ -4,7 +4,6 @@ import { fileURLToPath } from "node:url";
 import { FORMATS, renderDocument, ROOT } from "../documents/src/renderers.mjs";
 
 const samplePath = resolve(ROOT, "documents/examples/acceptance-sample.json");
-const sample = (await import("node:fs", { with: { type: "json" } }).catch(() => null));
 const document = JSON.parse((await import("node:fs")).readFileSync(samplePath, "utf8"));
 function arg(name, fallback) {
   const index = process.argv.indexOf(name);
