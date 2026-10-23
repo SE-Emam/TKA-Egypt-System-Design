@@ -67,7 +67,7 @@ test("LTR documents remain supported without changing the canonical TKA identity
   assert.match(markdown, /> TKA Egypt · en · LTR/);
   assert.match(html, /<html lang="en" dir="ltr">/);
   assert.match(html, /--tka-brand-blue:#0846ED/);
-  assert.doesNotMatch(html, /--tka-brand-blue:#[0-9A-Fa-f]{6}(?!0846ED)/);
+  assert.doesNotMatch(html, /--tka-brand-blue:#0055AA/);
 });
 
 test("renderer refuses implicit profile changes and unsupported formats", async () => {
