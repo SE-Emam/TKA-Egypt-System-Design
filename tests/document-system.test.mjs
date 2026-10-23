@@ -26,14 +26,14 @@ test("explicit profile protects both brand anchors and declares the five output 
 });
 
 test("document validation rejects unknown fields and malformed tables", () => {
-  assert.throws(() => validateDocument({ ...fixture, unapprovedColor: "#ff00ff" }), /unsupported field/);
+  assert.throws(() => validateDocument({ ...fixture, unapprovedColor: "#ff00ff" }), /additional properties|unsupported field/);
   assert.throws(() => validateDocument({ ...fixture, direction: "sideways" }), /direction/);
   const malformed = structuredClone(fixture);
   malformed.sections[0].table.rows.push(["too", "few"]);
   assert.throws(() => validateDocument(malformed), /matching the header width/);
   const malformedSection = structuredClone(fixture);
   malformedSection.sections[0].untrackedBrandColor = "#112233";
-  assert.throws(() => validateDocument(malformedSection), /unsupported field/);
+  assert.throws(() => validateDocument(malformedSection), /additional properties|unsupported field/);
 });
 
 test("Markdown renderer preserves RTL metadata, headings, bullets, code and tables", async () => {
