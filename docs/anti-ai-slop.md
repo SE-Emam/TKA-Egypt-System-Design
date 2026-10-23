@@ -14,6 +14,8 @@ This document is a binding quality gate, not a mood board. “Looks modern” is
 - Raw color literals, arbitrary typography, one-off spacing, arbitrary radii, or ad-hoc shadow values in product components.
 - Introducing a default component library or template to avoid designing a real information hierarchy.
 - Placeholder UI states shipped as if complete, unexplained disabled controls, and controls that look interactive but do nothing.
+- Unapproved local defaults or silent substitutions that bypass the canonical tokens, recipes, document schemas, project profiles, or user requirements.
+- Claims, implementation decisions, or acceptance results presented as verified without direct evidence.
 
 ## Required alternative
 
@@ -27,6 +29,8 @@ This document is a binding quality gate, not a mood board. “Looks modern” is
 8. Keep transitions short and functional. Honor reduced-motion settings.
 9. Validate narrow and wide viewports, keyboard flow, focus visibility, Arabic RTL, LTR fragments, and error/empty/loading states.
 10. Explain the rationale for any visual exception in the pull request.
+11. When evidence is missing, label it UNKNOWN/BLOCKED; do not guess. Ask for clarification when the unknown affects identity, architecture, security, privacy, data integrity, accessibility, cost, or acceptance.
+12. Use a default only when a canonical contract explicitly declares it for the current context. State its source and disclose its use. Mandatory missing or invalid configuration must fail closed.
 
 ## Agent rejection checklist
 
@@ -41,6 +45,14 @@ A code review must request changes if any answer below is “yes” without an e
 - Does animation add no meaningful information?
 - Is keyboard or focus behavior missing?
 - Does the visual look like a generic AI template instead of a specific TKA product?
+- Does a local fallback conceal a missing required configuration or override an explicit user choice?
+- Is an assumption presented as a verified fact or an unrun check reported as passing?
+
+## Automated enforcement contract
+
+The static gate scans the real tracked production-source roots `showcase/` and `documents/src/`. It must fail when either required root is absent, when no eligible source files are scanned, or when the canonical showcase template is not included. A successful run prints the scanned-file count and paths. Canonical tokens and policy documents are not treated as consumer UI files; the scanner separately validates required brand anchors and shared recipes in `panda.config.ts`.
+
+Negative tests must prove that representative violations (raw hex colors, gradients, fake placeholder copy, missing scan roots, and zero-file scans) produce a non-zero exit. A passing scanner is evidence only for the rules and source files it actually checks; it is not proof that every subjective visual-quality concern is machine-detectable. Human review remains required for layout quality, accessibility in context, RTL/LTR behavior, and product-specific appropriateness.
 
 ## Exceptions
 
