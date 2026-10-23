@@ -27,7 +27,7 @@ Required document fields: \`title\`, \`language\`, \`direction\` (\`rtl\` or \`l
 | HTML | Semantic HTML renderer; tokens injected from Panda config | HTML attributes, escaping/XSS regression, tables, canonical token colors | CI converts to PDF and verifies readable non-empty extraction, page count and preview |
 | DOCX | OOXML renderer via \`docx\` | ZIP CRC and required OOXML parts, title/content/direction markers | LibreOffice PDF conversion, extraction and raster preview |
 | PDF | PDF renderer via \`pdf-lib\`, embedded font + Arabic shaping/BiDi helpers | PDF header, reload, metadata and page count | \`pdfinfo\`, \`pdftotext\`, first-page raster preview |
-| PPTX | OOXML presentation renderer via PptxGenJS | ZIP CRC, presentation/slide parts and slide count | LibreOffice PDF conversion, extraction and raster preview |
+| PPTX | OOXML presentation renderer via PptxGenJS | Native PowerPoint tables, ZIP CRC, presentation/slide parts and slide count | LibreOffice PDF conversion, extraction and raster preview |
 
 The CI workflow is the executable acceptance gate. Its exact run and artifacts should be linked from the PR. A passing static checker without successful real exports is not sufficient.
 
