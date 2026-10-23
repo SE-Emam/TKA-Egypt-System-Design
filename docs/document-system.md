@@ -1,51 +1,82 @@
 # TKA Document System
 
-## Status
+## Purpose and implementation contract
 
-This initial foundation defines a common document content contract, a project-profile contract, the TKA default profile, initial Markdown/HTML template contracts, and static governance checks. It does **not** yet ship complete DOCX, PDF, or PPTX exporters, a Markdown/HTML rendering engine, or visual-regression validation. Do not describe all five output formats as implemented until those capabilities and their acceptance tests are merged.
+The document system turns one validated, presentation-independent content object into Markdown, HTML, DOCX, PDF, or PPTX. The implementation is in \`documents/src/renderers.mjs\`, the CLI in \`scripts/render-document.mjs\`, and the single-source TKA design tokens remain in \`panda.config.ts\`.
 
-## Source of truth
+A file extension alone is never acceptance evidence. The gates below distinguish renderer existence, generated artifacts, structural checks, and PDF-based rendering/extraction checks. Visual raster previews are archived by CI for human review; raster generation is not a substitute for a human visual review.
 
-- `panda.config.ts` remains the sole executable source for design tokens, semantic roles, and font families.
-- Project profiles refer to token names; they must not copy hex values or redefine protected TKA anchors.
-- Format adapters must consume tokens extracted from the canonical Panda configuration. They must not maintain independent palettes.
-- Documentation describes policy; it is not a second executable token source.
+## Single source of truth and identity separation
 
-## Project profiles
-
-- `documents/profiles/tka-default.json` is the fallback profile.
-- A project-specific profile may set project metadata, language, direction, and document defaults.
-- A profile may not override `brand.500` or `accent.500`, and may not change the canonical token source.
-- Unknown or malformed profile IDs are a hard error. Agents must not invent a profile when lookup fails; they must use the default profile and report the fallback.
+- \`panda.config.ts\` is the only executable source for color and font tokens. The exporter reads its palette at runtime; it does not own another handwritten TKA palette.
+- Protected anchors are immutable: \`brand.500 = #0846ED\` and \`accent.500 = #FEB700\`. A runtime mismatch fails closed.
+- Profiles provide project identity metadata, permitted formats, language, and direction. They cannot replace the token source or override brand anchors.
+- \`documents/profiles/tka-default.json\` is the explicit TKA Egypt fallback profile. Selecting a missing profile is an error; the renderer does not silently switch identities.
+- Blue is used for primary identity and headings; yellow is a limited accent. The HTML uses dark text on yellow, readable neutral surfaces, semantic sections/tables, logical CSS properties, a print stylesheet, and reduced-motion handling.
+- Text values are escaped in HTML output. The content schema and runtime validation reject unsupported top-level/section/table properties and malformed table dimensions.
 
 ## Content contract
 
-`documents/schemas/document.schema.json` defines the common content model for a title, optional description, language, direction, profile, sections, paragraphs, code, and tables. Format adapters must preserve content and semantic order.
+Required document fields: \`title\`, \`language\`, \`direction\` (\`rtl\` or \`ltr\`), \`profile\`, and at least one \`sections\` entry. A section contains a \`heading\` and may contain \`paragraphs\`, \`bullets\`, \`code\`, or a table object with \`headers\` and \`rows\`. Table rows must match the header column count. Unknown fields fail validation rather than being silently dropped.
 
-## Format implementation status
+## Output formats and acceptance evidence
 
-| Format | Status | Acceptance evidence required |
-| --- | --- | --- |
-| Markdown | Contract/template only | Rendered sample, structural checks, content preservation |
-| HTML | Template contract only | Rendered sample, token injection, RTL/LTR and print checks |
-| DOCX | Not implemented | Valid OOXML package, reopen/parse, content and style checks |
-| PDF | Not implemented | Valid PDF, text extraction, font and page-boundary checks |
-| PPTX | Not implemented | Valid OOXML package, reopen/parse, text-boundary and layout checks |
+| Format | Exporter | Structural checks | Render/extraction checks |
+| --- | --- | --- | --- |
+| Markdown | Direct Markdown renderer | Content, headings, code fences, table shape | UTF-8 content preservation |
+| HTML | Semantic HTML renderer; tokens injected from Panda config | HTML attributes, escaping/XSS regression, tables, canonical token colors | CI converts to PDF and verifies readable non-empty extraction, page count and preview |
+| DOCX | OOXML renderer via \`docx\` | ZIP CRC and required OOXML parts, title/content/direction markers | LibreOffice PDF conversion, extraction and raster preview |
+| PDF | PDF renderer via \`pdf-lib\`, embedded font + Arabic shaping/BiDi helpers | PDF header, reload, metadata and page count | \`pdfinfo\`, \`pdftotext\`, first-page raster preview |
+| PPTX | OOXML presentation renderer via PptxGenJS | ZIP CRC, presentation/slide parts and slide count | LibreOffice PDF conversion, extraction and raster preview |
 
-## Mandatory agent workflow
+The CI workflow is the executable acceptance gate. Its exact run and artifacts should be linked from the PR. A passing static checker without successful real exports is not sufficient.
 
-1. Read `AGENTS.md` and this document before creating a document.
-2. Identify the target project and resolve its profile; use `tka-default` only as a documented fallback.
-3. Validate the content against the document contract.
-4. Use the approved format adapter and tokens; never apply ad-hoc brand colors.
-5. Run `npm run check:documents` and the format-specific renderer/visual checks that exist.
-6. Report each requested format as PASS, PARTIAL, or BLOCKED with artifact/test evidence. File creation alone is not acceptance.
+### PDF font requirement
 
-## Acceptance gates
+PDF output must embed an Arabic-capable TrueType font, so text does not depend on the reader’s local fonts. The CLI looks for known system font paths; on CI the workflow installs DejaVu fonts. For a custom font, use \`--font /absolute/path/to/font.ttf\` or set \`TKA_DOCUMENT_FONT\`. Font files are intentionally not bundled into this repository; validate your font’s license and Arabic glyph coverage before production use. The PDF renderer performs Arabic shaping, but its shaping implementation is not a substitute for full HarfBuzz shaping for every script/ligature combination.
 
-- Single token source remains `panda.config.ts`.
-- All project profiles validate and protected anchors cannot be overridden.
-- Every claimed format has a real exporter and a representative generated artifact.
-- Arabic RTL, mixed Arabic/Latin, long headings, tables, code, multi-page output, and content preservation are tested.
-- A deliberately invalid profile or brand override fails validation.
-- Document checks run in CI and failures block the pull request.
+## Usage
+
+Requires Node.js 22+ and npm.
+
+Install dependencies and run all checks:
+
+\`\`\`sh
+npm install
+npm run check:documents
+npm run check
+npm run docs:fixtures -- --out .test-artifacts/documents
+npm run docs:visual-check -- .test-artifacts/documents
+\`\`\`
+
+Render a document from JSON:
+
+\`\`\`sh
+npm run docs:render -- --input documents/examples/acceptance-sample.json --format html --out output/tka-report.html
+npm run docs:render -- --input documents/examples/acceptance-sample.json --format docx --out output/tka-report.docx
+npm run docs:render -- --input documents/examples/acceptance-sample.json --format pdf --out output/tka-report.pdf
+npm run docs:render -- --input documents/examples/acceptance-sample.json --format pptx --out output/tka-report.pptx
+npm run docs:render -- --input documents/examples/acceptance-sample.json --format markdown --out output/tka-report.md
+\`\`\`
+
+Change the profile intentionally with \`--profile <id>\`; the JSON document’s \`profile\` must match. For example, PDF with a custom font:
+
+\`\`\`sh
+npm run docs:render -- --input documents/examples/acceptance-sample.json --format pdf --out output/tka-report.pdf --font /absolute/path/to/ArabicFont.ttf
+\`\`\`
+
+The CLI prints a JSON generation summary. Generation success is not proof of all render/visual gates; use the CI acceptance workflow and inspect its report and previews.
+
+## CI and review checklist
+
+- All profile files and JSON contracts parse and pass policy checks.
+- The five real exporters generate artifacts from the same Arabic acceptance fixture.
+- DOCX/PPTX packages pass ZIP CRC and OOXML structure checks.
+- PDF can be reopened and exposes metadata and pages.
+- HTML content is escaped and direction is set on the root document.
+- CI converts DOCX/PPTX/HTML to PDF with LibreOffice, checks text extraction and page counts with Poppler, and produces first-page preview PNGs.
+- Human review should inspect Arabic shaping, punctuation, mixed Arabic/Latin runs, tables, page breaks, and clipping in those previews. Automated text extraction cannot prove the visual quality of every glyph or slide layout.
+
+## Current acceptance rule
+
+A format is **PASS** only when its exporter runs, an artifact is generated, structural checks pass, and all required render/extraction checks pass. Human visual review should remain marked **PARTIAL** until preview images have actually been inspected. If the CI run has not run or is unavailable, report the relevant gate as **PARTIAL**, not PASS.
