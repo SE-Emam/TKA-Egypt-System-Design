@@ -12,6 +12,10 @@ Reusable agent instructions for creating TKA Egypt branded assets and design del
 
 5. Require the agent to return the actual exported file and a PASS/PARTIAL/FAIL report.
 
+## MCP integration
+
+For clients that support Model Context Protocol, configure the companion local server described in [`docs/mcp-server.md`](../../docs/mcp-server.md). The Skill provides workflow instructions; MCP exposes structured tools and canonical reference content. They are complementary.
+
 ## Important
 - This skill supplies instructions; it does not itself generate images or provide a design tool.
 - Agent Skills installation paths and support vary by agent. Follow the selected agent's current documentation.
