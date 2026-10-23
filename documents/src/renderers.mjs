@@ -91,6 +91,7 @@ function validateSection(section, index) {
   if (!section || typeof section !== "object" || Array.isArray(section)) fail(label + " must be an object");
   onlyKeys(section, SECTION_FIELDS, label);
   nonEmptyText(section.heading, label + ".heading");
+  if (!["paragraphs", "bullets", "code", "table"].some((key) => section[key] !== undefined)) fail(label + " must contain paragraphs, bullets, code, or a table");
   if (section.paragraphs !== undefined && (!Array.isArray(section.paragraphs) || section.paragraphs.some((value) => typeof value !== "string"))) {
     fail(label + ".paragraphs must be an array of strings");
   }
