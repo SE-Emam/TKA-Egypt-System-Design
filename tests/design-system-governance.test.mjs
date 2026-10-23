@@ -75,3 +75,14 @@ test("scanner refuses a vacuous pass when scan roots contain no source files", (
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /No production UI\/document source files were scanned/);
 });
+
+test("canonical renderer may parse hex tokens but is still scanned for decorative violations", (t) => {
+  const root = fixture(t);
+  writeFileSync(join(root, "documents/src/renderer.mjs"), 'const validToken = /^#[0-9a-f]{6}$/i;\n');
+  const result = run(root);
+  assert.equal(result.status, 0, result.stderr);
+  writeFileSync(join(root, "documents/src/renderer.mjs"), 'const invalid = "linear-gradient(red, blue)";\n');
+  const rejected = run(root);
+  assert.notEqual(rejected.status, 0);
+  assert.match(rejected.stderr, /gradient violation in documents\/src\/renderer\.mjs/);
+});
