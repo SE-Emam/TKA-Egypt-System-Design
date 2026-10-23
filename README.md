@@ -45,3 +45,20 @@ Changes to brand colors, semantic meanings, component recipes, exceptions, or ac
 ## Status
 
 This repository was empty at the start of the bootstrap. This pull request establishes the baseline system contract and tooling; it does not imply that any separate TKA product site has already integrated it.
+
+## Governed document generation
+
+This design system also includes a profile-governed document renderer for Arabic RTL and explicit LTR documents. One validated content contract can generate Markdown, HTML, DOCX, PDF, and PPTX; the exporters derive brand tokens from `panda.config.ts`, not a parallel color palette.
+
+- [Document-system architecture and acceptance gates](docs/document-system.md)
+- [Default TKA document profile](documents/profiles/tka-default.json)
+- [Real Arabic RTL acceptance fixture](documents/examples/acceptance-sample.json)
+
+```sh
+npm install
+npm run check:documents
+npm run docs:fixtures -- --out .test-artifacts/documents
+npm run docs:visual-check -- .test-artifacts/documents
+```
+
+Generate a single document with `npm run docs:render -- --input documents/examples/acceptance-sample.json --format html --out output/report.html`. The PDF export requires an Arabic-capable TrueType font; the CI workflow installs DejaVu and performs LibreOffice/Poppler rendering checks. Read the document-system guide for the five formats, font setup, and the evidence required before calling a release accepted.
