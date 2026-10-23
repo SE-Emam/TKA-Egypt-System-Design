@@ -21,6 +21,8 @@ The brand colors are not interchangeable: blue carries primary actions and links
 
 ## Start here
 
+- [Design system showcase](https://se-emam.github.io/TKA-Egypt-System-Design/) — live reference for tokens, typography, accessible controls, dark mode, and RTL/LTR behavior.
+
 1. [Brand and visual language](docs/brand-and-visual-language.md)
 2. [Anti-AI-Slop rules](docs/anti-ai-slop.md)
 3. [Architecture and token contract](docs/architecture.md)
@@ -34,6 +36,7 @@ Requires Node.js 22+ and npm.
 ```sh
 npm install
 npm run check
+npm run showcase:build
 ```
 
 The check pipeline validates brand invariants, contrast expectations, architecture documentation, static anti-slop rules, TypeScript configuration, and Panda CSS code generation. The generated `styled-system/` directory is build output; do not hand-edit or commit it.
