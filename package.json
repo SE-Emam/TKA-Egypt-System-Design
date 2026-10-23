@@ -16,7 +16,8 @@
     "typecheck": "tsc --noEmit",
     "panda:codegen": "panda codegen",
     "check": "npm run check:system && npm run typecheck && npm run panda:codegen && npm run showcase:build",
-    "showcase:build": "node scripts/build-showcase.mjs"
+    "showcase:build": "node scripts/build-showcase.mjs",
+    "mcp:tka": "node mcp/tka-design-system-server.mjs"
   },
   "dependencies": {
     "ajv": "8.20.0",
