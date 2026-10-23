@@ -1,6 +1,6 @@
 import { readFileSync, existsSync } from "node:fs";
 import Ajv2020 from "ajv/dist/2020.js";
-import { dirname, resolve, isAbsolute } from "node:path";
+import { dirname, resolve, isAbsolute, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, Table, TableRow, TableCell, WidthType, ShadingType } from "docx";
 import { PDFDocument, rgb } from "pdf-lib";
@@ -67,7 +67,8 @@ export function loadProfile(profileId = "tka-default") {
     fail("profile id must be a lowercase slug");
   }
   const file = resolve(PROFILE_DIR, profileId + ".json");
-  if (!file.startsWith(PROFILE_DIR + "/") || !existsSync(file)) {
+  const relativeProfilePath = relative(PROFILE_DIR, file);
+  if (relativeProfilePath.startsWith("..") || isAbsolute(relativeProfilePath) || !existsSync(file)) {
     fail("profile " + profileId + " does not exist; no implicit identity fallback is allowed");
   }
   const profile = JSON.parse(readFileSync(file, "utf8"));
