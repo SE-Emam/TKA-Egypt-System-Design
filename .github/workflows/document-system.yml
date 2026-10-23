@@ -41,6 +41,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install --yes --no-install-recommends fonts-dejavu-core libreoffice-writer libreoffice-impress poppler-utils
 
+      - name: Verify Chromium browser for HTML rendering
+        run: |
+          google-chrome --version || google-chrome-stable --version || chromium --version || chromium-browser --version
+
       - name: Install Node dependencies
         run: npm install --no-audit --no-fund
 
