@@ -26,13 +26,15 @@ const html = (await import("node:fs")).readFileSync(resolve(artifactDir, "accept
 if (!markdown.includes("قبول نظام مستندات TKA") || !markdown.includes("مخرجات المستندات")) fail("Markdown content-preservation check did not find the Arabic fixture text");
 if (!html.includes('lang="ar" dir="rtl"') || !html.includes("--tka-brand-blue:#0846ED") || !html.includes("--tka-brand-yellow:#FEB700")) fail("HTML direction/canonical brand-token check failed");
 for (const source of ["acceptance-sample.docx", "acceptance-sample.pptx", "acceptance-sample.html"]) {
-  const result = run("soffice", ["--headless", "--convert-to", "pdf", "--outdir", conversionDir, resolve(artifactDir, source)]);
-  const pdf = resolve(conversionDir, extname(source).slice(1) + "-" + basename(source, extname(source)) + ".pdf");
+  const formatDir = resolve(conversionDir, extname(source).slice(1));
+  mkdirSync(formatDir, { recursive: true });
+  const result = run("soffice", ["--headless", "--convert-to", "pdf", "--outdir", formatDir, resolve(artifactDir, source)]);
+  const pdf = resolve(formatDir, basename(source, extname(source)) + ".pdf");
   if (!existsSync(pdf)) fail("LibreOffice did not create PDF rendering for " + source + ". " + result);
 }
 const pdfs = [
   resolve(artifactDir, "acceptance-sample.pdf"),
-  ...["acceptance-sample.docx", "acceptance-sample.pptx", "acceptance-sample.html"].map((source) => resolve(conversionDir, extname(source).slice(1) + "-" + basename(source, extname(source)) + ".pdf")),
+  ...["acceptance-sample.docx", "acceptance-sample.pptx", "acceptance-sample.html"].map((source) => resolve(conversionDir, extname(source).slice(1), basename(source, extname(source)) + ".pdf")),
 ];
 const report = [];
 for (let index = 0; index < pdfs.length; index += 1) {
