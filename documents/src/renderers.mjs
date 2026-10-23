@@ -211,7 +211,7 @@ export function renderHtml(document, tokens = extractDesignTokens()) {
     "*{box-sizing:border-box}html{background:var(--tka-paper);color:var(--tka-ink);font-family:\"" + escapeHtml(tokens.fontName) +
     "\",\"Segoe UI\",sans-serif;line-height:1.8}body{margin:0 auto;max-width:54rem;padding:2.5rem clamp(1rem,4vw,3rem)}" +
     "header{border-block-end:4px solid var(--tka-brand-blue);padding-block-end:1rem;margin-block-end:2rem}.wordmark{font-weight:700;color:var(--tka-brand-blue);font-size:.875rem;margin:0 0 .5rem}" +
-    "h1,h2{line-height:1.35}h1{font-size:2rem;margin:.2rem 0}h2{font-size:1.35rem;margin-block:2rem .75rem;padding-inline-start:.8rem;border-inline-start:4px solid var(--tka-brand-yellow)}" +
+    "h1,h2{line-height:1.35}h1{font-size:2rem;margin:.2rem 0;color:var(--tka-brand-blue)}h2{font-size:1.35rem;margin-block:2rem .75rem;padding-inline-start:.8rem;border-inline-start:4px solid var(--tka-brand-yellow);color:var(--tka-brand-blue)}" +
     "p,li{overflow-wrap:anywhere}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:var(--tka-subtle);border-inline-start:3px solid var(--tka-border);padding:1rem;direction:ltr;text-align:left;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.9rem}" +
     "table{border-collapse:collapse;width:100%;margin-block:1rem}th,td{border:1px solid var(--tka-border);padding:.6rem .75rem;text-align:start;vertical-align:top}th{background:var(--tka-subtle);font-weight:700}" +
     "a{color:var(--tka-brand-blue)}.description{color:var(--tka-muted);font-size:1.05rem}.meta{border-block-start:1px solid var(--tka-border);margin-block-start:3rem;padding-block-start:.75rem;color:var(--tka-muted);font-size:.8rem}" +
