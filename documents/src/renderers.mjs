@@ -334,7 +334,7 @@ export async function renderPptx(document, tokens = extractDesignTokens()) {
   function contentSlide(title, subtitle = "") {
     const slide = pptx.addSlide();
     slide.background = { color: white };
-    slide.addText("TKA EGYPT", { x: 0.55, y: 0.25, w: 3, h: 0.22, fontFace: font, fontSize: 8, bold: true, color: blue, margin: 0 });
+    slide.addText("TKA EGYPT", { x: rtl ? 9.8 : 0.55, y: 0.25, w: 3, h: 0.22, fontFace: font, fontSize: 8, bold: true, color: blue, margin: 0, align: rtl ? "right" : "left" });
     slide.addShape(pptx.ShapeType.line, { x: 0.55, y: 0.57, w: 12.25, h: 0, line: { color: blue, width: 1.5 } });
     slide.addShape(pptx.ShapeType.line, { x: rtl ? 12.05 : 0.55, y: 0.75, w: 0.35, h: 0, line: { color: yellow, width: 3 } });
     if (title) slide.addText(title, { x: 0.65, y: 0.9, w: 12, h: 0.7, fontFace: font, fontSize: 26, bold: true, color: blue, align: rtl ? "right" : "left", valign: "mid", margin: 0.04, rtlMode: rtl, lang: document.language, fit: "shrink" });
@@ -345,11 +345,11 @@ export async function renderPptx(document, tokens = extractDesignTokens()) {
   const cover = pptx.addSlide();
   cover.background = { color: white };
   cover.addShape(pptx.ShapeType.rect, { x: rtl ? 12.65 : 0, y: 0, w: 0.25, h: 7.5, line: { color: blue, transparency: 100 }, fill: { color: blue } });
-  cover.addText("TKA EGYPT", { x: 0.85, y: 1.05, w: 5.5, h: 0.35, fontFace: font, fontSize: 13, bold: true, color: blue, margin: 0 });
-  cover.addShape(pptx.ShapeType.line, { x: 0.85, y: 1.55, w: 1.1, h: 0, line: { color: yellow, width: 3.5 } });
-  cover.addText(document.title, { x: 0.85, y: 2, w: 11, h: 1.6, fontFace: font, fontSize: 34, bold: true, color: blue, align: rtl ? "right" : "left", valign: "mid", margin: 0.04, rtlMode: rtl, lang: document.language, fit: "shrink" });
-  if (document.description) cover.addText(document.description, { x: 0.85, y: 3.7, w: 10.9, h: 1.1, fontFace: font, fontSize: 17, color: ink, align: rtl ? "right" : "left", valign: "top", margin: 0.05, rtlMode: rtl, lang: document.language, fit: "shrink" });
-  cover.addText(document.language + " · " + document.direction.toUpperCase() + " · " + document.profile, { x: 0.85, y: 6.55, w: 10.5, h: 0.28, fontFace: font, fontSize: 9, color: ink, align: rtl ? "right" : "left", margin: 0, rtlMode: rtl });
+  cover.addText("TKA EGYPT", { x: rtl ? 6.98 : 0.85, y: 1.05, w: 5.5, h: 0.35, fontFace: font, fontSize: 13, bold: true, color: blue, margin: 0, align: rtl ? "right" : "left" });
+  cover.addShape(pptx.ShapeType.line, { x: rtl ? 11.38 : 0.85, y: 1.55, w: 1.1, h: 0, line: { color: yellow, width: 3.5 } });
+  cover.addText(document.title, { x: 0.85, y: 2, w: 11.63, h: 1.6, fontFace: font, fontSize: 34, bold: true, color: blue, align: rtl ? "right" : "left", valign: "mid", margin: 0.04, rtlMode: rtl, lang: document.language, fit: "shrink" });
+  if (document.description) cover.addText(document.description, { x: 0.85, y: 3.7, w: 11.63, h: 1.1, fontFace: font, fontSize: 17, color: ink, align: rtl ? "right" : "left", valign: "top", margin: 0.05, rtlMode: rtl, lang: document.language, fit: "shrink" });
+  cover.addText(document.language + " · " + document.direction.toUpperCase() + " · " + document.profile, { x: 0.85, y: 6.55, w: 11.63, h: 0.28, fontFace: font, fontSize: 9, color: ink, align: rtl ? "right" : "left", margin: 0, rtlMode: rtl });
   for (const section of document.sections) {
     const combined = contentBlocks(section).join("\n\n");
     const chunks = combined ? chunkText(combined, 1050) : [];
