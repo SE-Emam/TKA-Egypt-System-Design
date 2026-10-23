@@ -2,7 +2,7 @@ import { readFileSync, existsSync, mkdtempSync, writeFileSync, rmSync } from "no
 import { tmpdir } from "node:os";
 import { spawnSync } from "node:child_process";
 import Ajv2020 from "ajv/dist/2020.js";
-import { dirname, resolve, relative, join } from "node:path";
+import { dirname, resolve, isAbsolute, relative, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, Table, TableRow, TableCell, WidthType, ShadingType } from "docx";
 import PptxGenJS from "pptxgenjs";
