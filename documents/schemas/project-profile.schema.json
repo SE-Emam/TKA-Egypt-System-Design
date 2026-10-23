@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TKA Document Project Profile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "name", "extends", "brand", "documentDefaults"],
+  "properties": {
+    "id": {"type": "string", "minLength": 1},
+    "name": {"type": "string", "minLength": 1},
+    "extends": {"type": ["string", "null"]},
+    "brand": {
+      "type": "object", "additionalProperties": false,
+      "required": ["tokenSource", "protectedAnchors", "allowAnchorOverrides"],
+      "properties": {
+        "tokenSource": {"const": "panda.config.ts"},
+        "protectedAnchors": {"type": "array", "items": {"enum": ["brand.500", "accent.500"]}, "uniqueItems": true},
+        "allowAnchorOverrides": {"const": false}
+      }
+    },
+    "documentDefaults": {
+      "type": "object", "additionalProperties": false,
+      "required": ["language", "direction", "formats"],
+      "properties": {
+        "language": {"type": "string", "minLength": 2},
+        "direction": {"enum": ["ltr", "rtl"]},
+        "formats": {"type": "array", "minItems": 5, "uniqueItems": true, "items": {"enum": ["docx", "pdf", "markdown", "html", "pptx"]}}
+      }
+    }
+  }
+}
