@@ -149,6 +149,7 @@ test("DOCX code is split into shaded LTR monospace paragraphs", async () => {
   const codeParagraph = xml.slice(paragraphStart, paragraphEnd);
   assert.match(codeParagraph, /w:shd/);
   assert.match(codeParagraph, /Consolas/);
+  assert.match(codeParagraph, /w:rtl w:val="false"/);
   assert.match(codeParagraph, /console\.log/);
   assert.match(xml, /<w:t[^>]*>const brand/);
 });
