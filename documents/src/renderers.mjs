@@ -24,7 +24,7 @@ export function extractDesignTokens(configSource = readFileSync(resolve(ROOT, "p
   if (colorsStart < 0 || fontsStart < 0) fail("could not locate canonical color and font tokens in panda.config.ts");
   const colorText = configSource.slice(colorsStart, fontsStart);
   function palette(name) {
-    const pattern = new RegExp("^ {10}" + name + ": \\{([\\s\\S]*?)(?=^ {10}[A-Za-z][A-Za-z0-9]*: \\{|\\s*$)", "m");
+    const pattern = new RegExp("^ {10}" + name + ": \\{([\\s\\S]*?)^ {10}\\},?$", "m");
     const found = colorText.match(pattern);
     if (!found) fail("canonical palette " + name + " is missing");
     return found[1];
