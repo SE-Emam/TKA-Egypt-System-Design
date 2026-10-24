@@ -67,6 +67,13 @@ export default defineConfig({
             700: { value: "#1759A6" },
             900: { value: "#102F56" },
           },
+          vivid: {
+            500: {
+              value: "#1C62FF",
+              description:
+                "Bright companion blue — secondary accent only (owner decision, 2026-10-24). Not a brand anchor and never a primary-action color; exposed through the `highlight` semantic role for secondary emphasis. Contrast on white is 4.95:1, so never use it for body text or small UI text.",
+            },
+          },
         },
         fonts: {
           body: {
@@ -125,6 +132,8 @@ export default defineConfig({
           onActionPrimary: { value: "{colors.neutral.0}" },
           accent: { value: "{colors.accent.500}" },
           onAccent: { value: "{colors.neutral.900}" },
+          highlight: { value: "{colors.vivid.500}" },
+          onHighlight: { value: "{colors.neutral.0}" },
           focusRing: { value: { base: "{colors.brand.500}", _dark: "{colors.brand.300}" } },
           success: { value: "{colors.green.700}" },
           successSurface: { value: { base: "{colors.green.50}", _dark: "{colors.green.900}" } },

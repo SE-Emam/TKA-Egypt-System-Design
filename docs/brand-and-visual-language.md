@@ -6,8 +6,9 @@ TKA Egypt identity is the invariant. Panda CSS is the implementation tool, not t
 
 1. **Royal blue `#0846ED`:** primary action, active navigation, links, and key brand emphasis.
 2. **Yellow `#FEB700`:** accent, limited emphasis, selected markers, and highlights that do not rely on color alone.
-3. **White and neutral grays:** canvas, surfaces, borders, secondary text, and structure.
-4. **Status colors:** reserved for success, warning, error, and informational meaning. Never use status colors as decoration.
+3. **Bright blue `#1C62FF` (`highlight`, decided 2026-10-24):** secondary accent only — secondary emphasis and large highlights where the royal blue would be too heavy. It is not a brand anchor, never a primary action, and never body or small text (contrast on white is 4.95:1). White is the approved foreground on it.
+4. **White and neutral grays:** canvas, surfaces, borders, secondary text, and structure.
+5. **Status colors:** reserved for success, warning, error, and informational meaning. Never use status colors as decoration.
 
 Do not make every element blue or yellow. Brand is expressed through hierarchy and consistent application, not color saturation on every surface.
 
@@ -50,6 +51,7 @@ Arabic is a first-class direction, not a mirrored afterthought. Use CSS logical 
 
 - Use `actionPrimary` for primary interactive elements. White is the approved foreground on brand blue.
 - Use `accent` sparingly. The approved foreground on yellow is dark neutral, never white.
+- Use `highlight` (bright blue `#1C62FF`) sparingly for secondary emphasis only. It must never compete with `actionPrimary` in the same view, never replace a brand anchor, and never carry body or small text.
 - Surface, foreground, and border roles come from semantic tokens, so light and dark values can evolve without component rewrites.
 - Do not communicate status by color alone; include text, icons with accessible names, or another non-color cue.
 - New palette values and role assignments require contrast calculations and review.
